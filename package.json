@@ -17,6 +17,7 @@
     "spell-check": "cspell \"{src,test}/**/*.ts\" --no-progress",
     "spell-check:commit": "cspell --no-progress",
     "lint": "eslint \"{src,test}/**/*.ts\" --fix",
+    "lint:commit": "commitlint --edit",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
@@ -32,6 +33,8 @@
     "rxjs": "^7.2.0"
   },
   "devDependencies": {
+    "@commitlint/cli": "^15.0.0",
+    "@commitlint/config-conventional": "^15.0.0",
     "@nestjs/cli": "^8.0.0",
     "@nestjs/schematics": "^8.0.0",
     "@nestjs/testing": "^8.0.0",
