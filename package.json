@@ -16,6 +16,7 @@
     "start:prod": "node dist/main",
     "spell-check": "cspell \"{src,test}/**/*.ts\" --no-progress",
     "spell-check:commit": "cspell --no-progress",
+    "spell-check:staged": "cspell --no-progress",
     "lint": "eslint \"{src,test}/**/*.ts\" --fix",
     "lint:commit": "commitlint --edit",
     "test": "jest",
