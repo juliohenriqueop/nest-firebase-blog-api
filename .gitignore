@@ -30,3 +30,7 @@ lerna-debug.log*
 
 # Containers configuration files
 .docker
+
+# Environment variables
+*.env
+!.example.env

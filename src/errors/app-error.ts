@@ -1,0 +1,3 @@
+export enum AppError {
+  REQUIRED_ENVIRONMENT_VARIABLE_NOT_AVAILABLE,
+}
