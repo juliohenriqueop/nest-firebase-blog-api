@@ -19,6 +19,7 @@
     "spell-check:staged": "cspell --no-progress",
     "lint": "eslint \"{src,test}/**/*.ts\" --fix",
     "lint:commit": "commitlint --edit",
+    "lint:staged": "eslint",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
