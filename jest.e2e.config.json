@@ -6,5 +6,9 @@
   "transform": {
     "^.+\\.(t|j)s$": "ts-jest"
   },
+  "moduleNameMapper": {
+    "^@modules/app$": "<rootDir>/src/index",
+    "^@modules/(.*)$": "<rootDir>/src/$1/index"
+  },
   "clearMocks": true
 }
