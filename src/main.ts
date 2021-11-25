@@ -18,6 +18,8 @@ async function bootstrap() {
 
   app.use(helmet());
 
+  app.setGlobalPrefix('api');
+
   const portConfig = configService.get<string>('PORT');
   const port = parseInt(portConfig) || 3000;
 
