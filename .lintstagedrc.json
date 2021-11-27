@@ -1,3 +1,7 @@
 {
-  "{src,test}/**/*.ts": ["npm run spell-check:staged", "npm run lint:staged"]
+  "{src,test}/**/*.ts": [
+    "npm run spell-check:staged",
+    "npm run lint:staged",
+    "npm run test:staged"
+  ]
 }
