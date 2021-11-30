@@ -2,6 +2,7 @@ import * as helmet from 'helmet';
 import { NestFactory } from '@nestjs/core';
 import { ConfigService } from '@nestjs/config';
 import { VersioningType, VERSION_NEUTRAL } from '@nestjs/common';
+import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from '@modules/app';
 import { AppError, AppException } from '@modules/app';
 import { ConsoleColor } from '@modules/app';
@@ -25,6 +26,14 @@ async function bootstrap() {
     type: VersioningType.URI,
     defaultVersion: VERSION_NEUTRAL,
   });
+
+  app.useGlobalPipes(
+    new ValidationPipe({
+      forbidUnknownValues: true,
+      whitelist: true,
+      transform: true,
+    }),
+  );
 
   const portConfig = configService.get<string>('PORT');
   const port = parseInt(portConfig) || 3000;
