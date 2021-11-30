@@ -1,3 +1,4 @@
+import * as helmet from 'helmet';
 import { NestFactory } from '@nestjs/core';
 import { ConfigService } from '@nestjs/config';
 import { AppModule } from '@modules/app';
@@ -14,6 +15,8 @@ async function bootstrap() {
 
   const app = await NestFactory.create(AppModule);
   const configService = app.get(ConfigService);
+
+  app.use(helmet());
 
   const portConfig = configService.get<string>('PORT');
   const port = parseInt(portConfig) || 3000;

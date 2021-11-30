@@ -21,6 +21,7 @@ specifiers:
   eslint: ^8.0.1
   eslint-config-prettier: ^8.3.0
   eslint-plugin-prettier: ^4.0.0
+  helmet: ^4.6.0
   husky: ^7.0.4
   jest: ^27.2.5
   lint-staged: ^12.1.2
@@ -41,6 +42,7 @@ dependencies:
   '@nestjs/config': 1.1.3_52e62c454bb30b6fb9d7585d3a80be5b
   '@nestjs/core': 8.2.2_9db648ac67ddf45af580ea1e24f70cd7
   '@nestjs/platform-express': 8.2.2_85c4c0e028995b7d710082e2a98cc178
+  helmet: 4.6.0
   reflect-metadata: 0.1.13
   rimraf: 3.0.2
   rxjs: 7.4.0
@@ -3526,6 +3528,11 @@ packages:
     dependencies:
       function-bind: 1.1.1
     dev: true
+
+  /helmet/4.6.0:
+    resolution: {integrity: sha512-HVqALKZlR95ROkrnesdhbbZJFi/rIVSoNq6f3jA/9u6MIbTsPh3xZwihjeI5+DO/2sOV6HMHooXcEOuwskHpTg==}
+    engines: {node: '>=10.0.0'}
+    dev: false
 
   /hosted-git-info/2.8.9:
     resolution: {integrity: sha512-mxIDAb9Lsm6DoOJ7xH+5+X4y1LU/4Hi50L9C5sIswK3JzULS4bwk1FvjdBgvYR4bzT4tuUQiC15FE2f5HbLvYw==}
