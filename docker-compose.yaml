@@ -1,0 +1,12 @@
+version: '3.9'
+
+services:
+  app:
+    container_name: app
+    image: node:16.14.2-alpine
+    working_dir: /home/node/app
+    volumes:
+      - .:/home/node/app
+    command: npm run start:dev
+    ports:
+      - '3000:3000'
