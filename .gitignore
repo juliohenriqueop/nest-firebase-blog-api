@@ -34,3 +34,6 @@ lerna-debug.log*
 # Environment variables
 *.env
 !.example.env
+
+# Firebase configuration
+.firebaserc

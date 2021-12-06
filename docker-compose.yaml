@@ -10,3 +10,28 @@ services:
     command: npm run start:dev
     ports:
       - '3000:3000'
+
+  firebase:
+    container_name: firebase
+    image: andreysenov/firebase-tools
+    user: root
+    entrypoint: firebase
+    command: emulators:start --project ${FIREBASE_PROJECT_ID}
+    volumes:
+      - ./.docker/firebase:/home/node
+
+      - type: bind
+        source: ./firebase.json
+        target: /home/node/firebase.json
+    ports:
+      - '4000:4000'
+      - '4400:4400'
+      - '4500:4500'
+      - '5000:5000'
+      - '5001:5001'
+      - '8080:8080'
+      - '8085:8085'
+      - '9000:9000'
+      - '9005:9005'
+      - '9099:9099'
+      - '9199:9199'
