@@ -27,6 +27,7 @@ specifiers:
   helmet: ^4.6.0
   husky: ^7.0.4
   jest: ^27.2.5
+  jest-node-exports-resolver: ^1.1.2
   lint-staged: ^12.1.2
   nestjs-firebase: ^8.2.3
   prettier: ^2.3.2
@@ -74,6 +75,7 @@ devDependencies:
   eslint-plugin-prettier: 4.0.0_6c1acfc8d9d3a8dba99beef4e8bcebae
   husky: 7.0.4
   jest: 27.3.1_ts-node@10.4.0
+  jest-node-exports-resolver: 1.1.2
   lint-staged: 12.1.2
   prettier: 2.4.1
   source-map-support: 0.5.21
@@ -4642,6 +4644,10 @@ packages:
     dependencies:
       '@jest/types': 27.2.5
       '@types/node': 16.11.9
+    dev: true
+
+  /jest-node-exports-resolver/1.1.2:
+    resolution: {integrity: sha512-TfHISrP75m4NBZk25Z2WjAR4wcuerChuBuslbwOP17BU3Ej2cLUsfFUwMI9Qc39TfwcuotJfIMSu2chn/GdznA==}
     dev: true
 
   /jest-pnp-resolver/1.2.2_jest-resolve@27.3.1:
