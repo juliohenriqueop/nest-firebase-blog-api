@@ -1,0 +1,7 @@
+export enum AuthError {
+  USER_DISABLED,
+  USER_NOT_FOUND,
+  TOKEN_REVOKED,
+  TOKEN_EXPIRED,
+  TOKEN_INVALID,
+}

@@ -3,6 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ServiceAccount } from 'firebase-admin';
 import { FirebaseModule, FirebaseModuleOptions } from 'nestjs-firebase';
 import { AppError, AppException } from '@modules/app';
+import { AuthModule } from '@modules/auth';
 
 @Module({
   imports: [
@@ -67,6 +68,7 @@ import { AppError, AppException } from '@modules/app';
         return null;
       },
     }),
+    AuthModule,
   ],
   controllers: [],
   providers: [],
