@@ -36,6 +36,7 @@ describe('UsersService', () => {
   const mockFirebaseAdmin = {
     auth: {
       getUser: jest.fn().mockResolvedValue(userRecord),
+      getUserByEmail: jest.fn().mockResolvedValue(userRecord),
     },
   };
 
@@ -96,6 +97,45 @@ describe('UsersService', () => {
       const findByIdPromise = sutUsersService.findById(user.id);
 
       await expect(findByIdPromise).rejects.toStrictEqual(untreatedException);
+    });
+  });
+
+  describe('findByEmail', () => {
+    it('should find a user', async () => {
+      const userFoundByEmail = await sutUsersService.findByEmail(user.email);
+
+      expect(mockFirebaseAdmin.auth.getUserByEmail).toHaveBeenCalledTimes(1);
+      expect(mockFirebaseAdmin.auth.getUserByEmail).toHaveBeenCalledWith(
+        user.email,
+      );
+      expect(userFoundByEmail).toStrictEqual(userRecord);
+    });
+
+    it('should throw NOT_FOUND when the user is not found', async () => {
+      mockFirebaseAdmin.auth.getUserByEmail.mockImplementationOnce(async () => {
+        throw new FirebaseAuthError({
+          code: 'user-not-found',
+          message: promiseReminder,
+        });
+      });
+
+      const findByEmailPromise = sutUsersService.findByEmail(user.id);
+
+      await expect(findByEmailPromise).rejects.toThrowError(
+        expect.objectContaining({ type: UserError.NOT_FOUND }),
+      );
+    });
+
+    it('should rethrow untreated exceptions', async () => {
+      mockFirebaseAdmin.auth.getUserByEmail.mockRejectedValueOnce(
+        untreatedException,
+      );
+
+      const findByEmailPromise = sutUsersService.findByEmail(user.id);
+
+      await expect(findByEmailPromise).rejects.toStrictEqual(
+        untreatedException,
+      );
     });
   });
 });

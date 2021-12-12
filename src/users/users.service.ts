@@ -21,4 +21,16 @@ export class UsersService {
       throw firebaseAuthError;
     }
   }
+
+  async findByEmail(email: string): Promise<UserRecord> {
+    try {
+      return await this.firebase.auth.getUserByEmail(email);
+    } catch (firebaseAuthError) {
+      if (firebaseAuthError.code === 'auth/user-not-found') {
+        throw new UserException(UserError.NOT_FOUND, 'user not found');
+      }
+
+      throw firebaseAuthError;
+    }
+  }
 }
