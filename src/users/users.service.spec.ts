@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { ConfigModule } from '@nestjs/config';
 import { FirebaseModule, FirebaseConstants } from 'nestjs-firebase';
-import { UserMetadata, UserRecord } from 'firebase-admin/auth';
+import { UserMetadata, UserRecord, ListUsersResult } from 'firebase-admin/auth';
 import { FirebaseAuthError } from 'firebase-admin/lib/utils/error';
 import { UsersService } from '@modules/users';
 import { UserError } from '@modules/users';
@@ -9,11 +10,19 @@ describe('UsersService', () => {
   let sutUsersService: UsersService;
 
   const promiseReminder = 'Should await for the promise?';
+  const pageToken = 'PAGE_TOKEN';
 
   const user = {
     id: 'USER_ID',
     name: 'User Name',
     email: 'user@email.com',
+    phone: '+1 650-555-3434',
+  };
+
+  const otherUser = {
+    id: 'OTHER_USER_ID',
+    name: 'Other User Name',
+    email: 'other_user@email.com',
     phone: '+1 650-555-3434',
   };
 
@@ -35,11 +44,31 @@ describe('UsersService', () => {
     toJSON: () => new Object(),
   };
 
+  const otherUserRecord: UserRecord = {
+    uid: otherUser.id,
+    displayName: otherUser.name,
+    email: otherUser.email,
+    emailVerified: false,
+    phoneNumber: otherUser.phone,
+    disabled: false,
+    metadata: userMetadata,
+    providerData: [],
+    toJSON: () => new Object(),
+  };
+
+  const usersRecords: UserRecord[] = [userRecord, otherUserRecord];
+
+  const usersList: ListUsersResult = {
+    pageToken: pageToken,
+    users: usersRecords,
+  };
+
   const mockFirebaseAdmin = {
     auth: {
       getUser: jest.fn().mockResolvedValue(userRecord),
       getUserByEmail: jest.fn().mockResolvedValue(userRecord),
       getUserByPhoneNumber: jest.fn().mockResolvedValue(userRecord),
+      listUsers: jest.fn().mockResolvedValue(usersList),
     },
   };
 
@@ -59,6 +88,7 @@ describe('UsersService', () => {
           ],
           exports: [FirebaseConstants.FIREBASE_TOKEN],
         },
+        ConfigModule,
       ],
       providers: [UsersService],
     }).compile();
@@ -188,6 +218,31 @@ describe('UsersService', () => {
       await expect(findByPhoneNumberPromise).rejects.toStrictEqual(
         untreatedException,
       );
+    });
+  });
+
+  describe('findAll', () => {
+    it('should find all users', async () => {
+      const listUsersResult = await sutUsersService.findAll(pageToken);
+
+      expect(mockFirebaseAdmin.auth.listUsers).toHaveBeenCalledTimes(1);
+      expect(mockFirebaseAdmin.auth.listUsers).toHaveBeenCalledWith(
+        expect.anything(),
+        pageToken,
+      );
+      expect(listUsersResult.pageToken).toStrictEqual(pageToken);
+      expect(listUsersResult.users).toContainEqual(userRecord);
+      expect(listUsersResult.users).toContainEqual(otherUserRecord);
+    });
+
+    it('should rethrow untreated exceptions', async () => {
+      mockFirebaseAdmin.auth.listUsers.mockRejectedValueOnce(
+        untreatedException,
+      );
+
+      const findAllPromise = sutUsersService.findAll(user.id);
+
+      await expect(findAllPromise).rejects.toStrictEqual(untreatedException);
     });
   });
 });

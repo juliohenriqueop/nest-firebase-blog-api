@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { InjectFirebaseAdmin, FirebaseAdmin } from 'nestjs-firebase';
-import { UserRecord } from 'firebase-admin/auth';
+import { UserRecord, ListUsersResult } from 'firebase-admin/auth';
 import { UserError, UserException } from '@modules/users';
 
 @Injectable()
@@ -8,6 +9,8 @@ export class UsersService {
   constructor(
     @InjectFirebaseAdmin()
     private readonly firebase: FirebaseAdmin,
+
+    private readonly config: ConfigService,
   ) {}
 
   async findById(id: string): Promise<UserRecord> {
@@ -44,5 +47,12 @@ export class UsersService {
 
       throw firebaseAuthError;
     }
+  }
+
+  async findAll(pageToken: string): Promise<ListUsersResult> {
+    const usersPerPageConfig = this.config.get<string>('USERS_PER_PAGE');
+    const usersPerPage = parseInt(usersPerPageConfig) || 25;
+
+    return await this.firebase.auth.listUsers(usersPerPage, pageToken);
   }
 }
