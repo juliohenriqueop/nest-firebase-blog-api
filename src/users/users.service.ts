@@ -33,4 +33,16 @@ export class UsersService {
       throw firebaseAuthError;
     }
   }
+
+  async findByPhoneNumber(phoneNumber: string): Promise<UserRecord> {
+    try {
+      return await this.firebase.auth.getUserByPhoneNumber(phoneNumber);
+    } catch (firebaseAuthError) {
+      if (firebaseAuthError.code === 'auth/user-not-found') {
+        throw new UserException(UserError.NOT_FOUND, 'user not found');
+      }
+
+      throw firebaseAuthError;
+    }
+  }
 }
