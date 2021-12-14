@@ -78,6 +78,7 @@ describe('UsersService', () => {
       getUserByPhoneNumber: jest.fn().mockResolvedValue(userRecord),
       listUsers: jest.fn().mockResolvedValue(usersList),
       updateUser: jest.fn().mockResolvedValue(userRecord),
+      deleteUser: jest.fn().mockResolvedValue(undefined),
     },
   };
 
@@ -335,6 +336,40 @@ describe('UsersService', () => {
       );
 
       await expect(updateUserPromise).rejects.toStrictEqual(untreatedException);
+    });
+  });
+
+  describe('delete', () => {
+    it('should delete users', async () => {
+      await sutUsersService.delete(user.id);
+
+      expect(mockFirebaseAdmin.auth.deleteUser).toHaveBeenCalledTimes(1);
+      expect(mockFirebaseAdmin.auth.deleteUser).toHaveBeenCalledWith(user.id);
+    });
+
+    it('should throw NOT_FOUND error when user is not found', async () => {
+      mockFirebaseAdmin.auth.deleteUser.mockImplementationOnce(async () => {
+        throw new FirebaseAuthError({
+          code: 'user-not-found',
+          message: promiseReminder,
+        });
+      });
+
+      const deleteUserPromise = sutUsersService.delete(user.id);
+
+      await expect(deleteUserPromise).rejects.toThrowError(
+        expect.objectContaining({ type: UserError.NOT_FOUND }),
+      );
+    });
+
+    it('should rethrow untreated exceptions', async () => {
+      mockFirebaseAdmin.auth.deleteUser.mockRejectedValueOnce(
+        untreatedException,
+      );
+
+      const deleteUserPromise = sutUsersService.delete(user.id);
+
+      await expect(deleteUserPromise).rejects.toStrictEqual(untreatedException);
     });
   });
 });

@@ -82,4 +82,16 @@ export class UsersService {
       throw firebaseAuthError;
     }
   }
+
+  async delete(id: string): Promise<void> {
+    try {
+      return await this.firebase.auth.deleteUser(id);
+    } catch (firebaseAuthError) {
+      if (firebaseAuthError.code === 'auth/user-not-found') {
+        throw new UserException(UserError.NOT_FOUND, 'user not found');
+      }
+
+      throw firebaseAuthError;
+    }
+  }
 }
