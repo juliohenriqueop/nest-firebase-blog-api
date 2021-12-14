@@ -63,12 +63,21 @@ describe('UsersService', () => {
     users: usersRecords,
   };
 
+  const updateUserPropertiesInputDto = {
+    disabled: false,
+    emailConfirmed: true,
+    name: user.name,
+    email: user.email,
+    phoneNumber: user.phone,
+  };
+
   const mockFirebaseAdmin = {
     auth: {
       getUser: jest.fn().mockResolvedValue(userRecord),
       getUserByEmail: jest.fn().mockResolvedValue(userRecord),
       getUserByPhoneNumber: jest.fn().mockResolvedValue(userRecord),
       listUsers: jest.fn().mockResolvedValue(usersList),
+      updateUser: jest.fn().mockResolvedValue(userRecord),
     },
   };
 
@@ -243,6 +252,89 @@ describe('UsersService', () => {
       const findAllPromise = sutUsersService.findAll(user.id);
 
       await expect(findAllPromise).rejects.toStrictEqual(untreatedException);
+    });
+  });
+
+  describe('update', () => {
+    it('should update user', async () => {
+      const updatedUser = await sutUsersService.update(
+        user.id,
+        updateUserPropertiesInputDto,
+      );
+
+      expect(mockFirebaseAdmin.auth.updateUser).toHaveBeenCalledTimes(1);
+      expect(mockFirebaseAdmin.auth.updateUser).toHaveBeenCalledWith(
+        user.id,
+        expect.anything(),
+      );
+      expect(updatedUser).toStrictEqual(userRecord);
+    });
+
+    it('should throw NOT_FOUND when user is not found', async () => {
+      mockFirebaseAdmin.auth.updateUser.mockImplementationOnce(async () => {
+        throw new FirebaseAuthError({
+          code: 'user-not-found',
+          message: promiseReminder,
+        });
+      });
+
+      const updateUserPromise = sutUsersService.update(
+        user.id,
+        updateUserPropertiesInputDto,
+      );
+
+      await expect(updateUserPromise).rejects.toThrowError(
+        expect.objectContaining({ type: UserError.NOT_FOUND }),
+      );
+    });
+
+    it('should throw EMAIL_ALREADY_USED when user e-mail is already in use', async () => {
+      mockFirebaseAdmin.auth.updateUser.mockImplementationOnce(async () => {
+        throw new FirebaseAuthError({
+          code: 'email-already-exists',
+          message: promiseReminder,
+        });
+      });
+
+      const updateUserPromise = sutUsersService.update(
+        user.id,
+        updateUserPropertiesInputDto,
+      );
+
+      await expect(updateUserPromise).rejects.toThrowError(
+        expect.objectContaining({ type: UserError.EMAIL_ALREADY_USED }),
+      );
+    });
+
+    it('should throw PHONE_NUMBER_ALREADY_USED when user phone number is already in use', async () => {
+      mockFirebaseAdmin.auth.updateUser.mockImplementationOnce(async () => {
+        throw new FirebaseAuthError({
+          code: 'phone-number-already-exists',
+          message: promiseReminder,
+        });
+      });
+
+      const updateUserPromise = sutUsersService.update(
+        user.id,
+        updateUserPropertiesInputDto,
+      );
+
+      await expect(updateUserPromise).rejects.toThrowError(
+        expect.objectContaining({ type: UserError.PHONE_NUMBER_ALREADY_USED }),
+      );
+    });
+
+    it('should rethrow untreated exceptions', async () => {
+      mockFirebaseAdmin.auth.updateUser.mockRejectedValueOnce(
+        untreatedException,
+      );
+
+      const updateUserPromise = sutUsersService.update(
+        user.id,
+        updateUserPropertiesInputDto,
+      );
+
+      await expect(updateUserPromise).rejects.toStrictEqual(untreatedException);
     });
   });
 });

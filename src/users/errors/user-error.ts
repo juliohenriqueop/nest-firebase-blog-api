@@ -1,3 +1,5 @@
 export enum UserError {
   NOT_FOUND,
+  EMAIL_ALREADY_USED,
+  PHONE_NUMBER_ALREADY_USED,
 }

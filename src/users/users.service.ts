@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectFirebaseAdmin, FirebaseAdmin } from 'nestjs-firebase';
 import { UserRecord, ListUsersResult } from 'firebase-admin/auth';
+import { UpdateRequest } from 'firebase-admin/auth';
 import { UserError, UserException } from '@modules/users';
 
 @Injectable()
@@ -54,5 +55,31 @@ export class UsersService {
     const usersPerPage = parseInt(usersPerPageConfig) || 25;
 
     return await this.firebase.auth.listUsers(usersPerPage, pageToken);
+  }
+
+  async update(id: string, properties: UpdateRequest): Promise<UserRecord> {
+    try {
+      return await this.firebase.auth.updateUser(id, properties);
+    } catch (firebaseAuthError) {
+      if (firebaseAuthError.code === 'auth/user-not-found') {
+        throw new UserException(UserError.NOT_FOUND, 'user not found');
+      }
+
+      if (firebaseAuthError.code === 'auth/email-already-exists') {
+        throw new UserException(
+          UserError.EMAIL_ALREADY_USED,
+          'the informed e-mail is already in use',
+        );
+      }
+
+      if (firebaseAuthError.code === 'auth/phone-number-already-exists') {
+        throw new UserException(
+          UserError.PHONE_NUMBER_ALREADY_USED,
+          'the informed phone number is already in use',
+        );
+      }
+
+      throw firebaseAuthError;
+    }
   }
 }
