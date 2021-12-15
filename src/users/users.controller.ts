@@ -1,7 +1,8 @@
 import { Controller } from '@nestjs/common';
-import { Get, Patch } from '@nestjs/common';
+import { Get, Patch, Delete } from '@nestjs/common';
 import { Param, Query, Body } from '@nestjs/common';
 import { NotFoundException, ConflictException } from '@nestjs/common';
+import { HttpCode, HttpStatus } from '@nestjs/common';
 import { UsersService, UserError } from '@modules/users';
 import { FindUserOutputDto } from '@modules/users';
 import { toFindUserOutputDtoFromUserRecord } from '@modules/users';
@@ -88,6 +89,20 @@ export class UsersController {
 
       if (userException.type === UserError.PHONE_NUMBER_ALREADY_USED) {
         throw new ConflictException(userException.message);
+      }
+
+      throw userException;
+    }
+  }
+
+  @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async delete(@Param('id') id: string): Promise<void> {
+    try {
+      return await this.userService.delete(id);
+    } catch (userException) {
+      if (userException.type === UserError.NOT_FOUND) {
+        throw new NotFoundException(userException.message);
       }
 
       throw userException;

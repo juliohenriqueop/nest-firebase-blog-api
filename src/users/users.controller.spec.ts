@@ -117,6 +117,7 @@ describe('UsersController', () => {
     findById: jest.fn().mockResolvedValue(userRecord),
     findAll: jest.fn().mockResolvedValue(listUsersResult),
     update: jest.fn().mockResolvedValue(userRecord),
+    delete: jest.fn(),
   };
 
   const untreatedException = new Error(promiseReminder);
@@ -364,6 +365,37 @@ describe('UsersController', () => {
       );
 
       await expect(updateUserPromise).rejects.toStrictEqual(untreatedException);
+    });
+  });
+
+  describe('delete', () => {
+    it('should delete users once', async () => {
+      await usersController.delete(user.id);
+
+      expect(mockUsersService.delete).toHaveBeenCalledTimes(1);
+      expect(mockUsersService.delete).toHaveBeenCalledWith(user.id);
+    });
+
+    it('should throw NotFoundException when the user is not found', async () => {
+      const userNotFoundException = new UserException(
+        UserError.NOT_FOUND,
+        promiseReminder,
+      );
+
+      mockUsersService.delete.mockRejectedValueOnce(userNotFoundException);
+
+      const deletePromise = usersController.delete(user.id);
+
+      await expect(deletePromise).rejects.toThrowError(
+        new NotFoundException(userNotFoundException.message),
+      );
+    });
+
+    it('should rethrow untreated exceptions', async () => {
+      mockUsersService.delete.mockRejectedValueOnce(untreatedException);
+
+      const deletePromise = usersController.delete(user.id);
+      await expect(deletePromise).rejects.toStrictEqual(untreatedException);
     });
   });
 });
