@@ -1,12 +1,15 @@
 import { Controller } from '@nestjs/common';
-import { Get } from '@nestjs/common';
-import { Param, Query } from '@nestjs/common';
-import { NotFoundException } from '@nestjs/common';
+import { Get, Patch } from '@nestjs/common';
+import { Param, Query, Body } from '@nestjs/common';
+import { NotFoundException, ConflictException } from '@nestjs/common';
 import { UsersService, UserError } from '@modules/users';
-import { FindUsersInputDto, FindUserOutputDto } from '@modules/users';
+import { FindUserOutputDto } from '@modules/users';
 import { toFindUserOutputDtoFromUserRecord } from '@modules/users';
-import { FindUsersOutputDto } from '@modules/users';
+import { FindUsersInputDto, FindUsersOutputDto } from '@modules/users';
 import { toFindUsersOutputDtoFromListUsersResult } from '@modules/users';
+import { UpdateUserInputDto, UpdateUserOutputDto } from '@modules/users';
+import { toUpdateRequestFromUpdateUserInputDto } from '@modules/users';
+import { toUpdateUserOutputDtoFromUserRecord } from '@modules/users';
 
 @Controller({ path: 'users', version: '1' })
 export class UsersController {
@@ -61,6 +64,33 @@ export class UsersController {
       }
 
       throw findOneException;
+    }
+  }
+
+  @Patch(':id')
+  async update(
+    @Param('id') id: string,
+    @Body() properties: UpdateUserInputDto,
+  ): Promise<UpdateUserOutputDto> {
+    try {
+      const updateRequest = toUpdateRequestFromUpdateUserInputDto(properties);
+      const user = await this.userService.update(id, updateRequest);
+
+      return toUpdateUserOutputDtoFromUserRecord(user);
+    } catch (userException) {
+      if (userException.type === UserError.NOT_FOUND) {
+        throw new NotFoundException(userException.message);
+      }
+
+      if (userException.type === UserError.EMAIL_ALREADY_USED) {
+        throw new ConflictException(userException.message);
+      }
+
+      if (userException.type === UserError.PHONE_NUMBER_ALREADY_USED) {
+        throw new ConflictException(userException.message);
+      }
+
+      throw userException;
     }
   }
 }

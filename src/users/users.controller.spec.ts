@@ -1,10 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { NotFoundException } from '@nestjs/common';
 import { UserMetadata, UserRecord, ListUsersResult } from 'firebase-admin/auth';
+import { UpdateRequest } from 'firebase-admin/auth';
 import { UsersService, UsersController } from '@modules/users';
+import { NotFoundException, ConflictException } from '@nestjs/common';
 import { UserError, UserException } from '@modules/users';
 import { FindUserOutputDto } from '@modules/users';
 import { FindUsersOutputDto } from '@modules/users';
+import { UpdateUserInputDto, UpdateUserOutputDto } from '@modules/users';
 
 describe('UsersController', () => {
   let usersController: UsersController;
@@ -93,11 +95,28 @@ describe('UsersController', () => {
     users: [findUserOutputDto, otherFindUserOutputDto],
   };
 
+  const updateRequest: UpdateRequest = {
+    disabled: false,
+    emailVerified: true,
+    displayName: 'User Name',
+    email: 'user@email.com',
+    password: 'USER_PASSWORD_123456',
+    photoURL: 'https://placeimg.com/640/480/people',
+    phoneNumber: '+1 650-555-3434',
+  };
+
+  const updateUserInputDto: UpdateUserInputDto = {
+    ...findUserOutputDto,
+    password: 'USER_PASSWORD_123456',
+  };
+  const updateUserOutputDto: UpdateUserOutputDto = findUserOutputDto;
+
   const mockUsersService = {
     findByEmail: jest.fn().mockResolvedValue(userRecord),
     findByPhoneNumber: jest.fn().mockResolvedValue(userRecord),
     findById: jest.fn().mockResolvedValue(userRecord),
     findAll: jest.fn().mockResolvedValue(listUsersResult),
+    update: jest.fn().mockResolvedValue(userRecord),
   };
 
   const untreatedException = new Error(promiseReminder);
@@ -260,6 +279,91 @@ describe('UsersController', () => {
           untreatedException,
         );
       });
+    });
+  });
+
+  describe('update', () => {
+    it('should update users', async () => {
+      const updatedUser = await usersController.update(
+        user.id,
+        updateUserInputDto,
+      );
+
+      expect(mockUsersService.update).toHaveBeenCalledTimes(1);
+      expect(mockUsersService.update).toHaveBeenCalledWith(
+        user.id,
+        updateRequest,
+      );
+      expect(updatedUser).toStrictEqual(updateUserOutputDto);
+    });
+
+    it('should throw NotFoundException when the user it not found', async () => {
+      const userNotFoundException = new UserException(
+        UserError.NOT_FOUND,
+        promiseReminder,
+      );
+
+      mockUsersService.update.mockRejectedValueOnce(userNotFoundException);
+
+      const updateUserPromise = usersController.update(
+        user.id,
+        updateUserInputDto,
+      );
+
+      await expect(updateUserPromise).rejects.toStrictEqual(
+        new NotFoundException(userNotFoundException.message),
+      );
+    });
+
+    it('should throw ConflictException when the e-mail is already in use', async () => {
+      const userEmailAlreadyInUseException = new UserException(
+        UserError.EMAIL_ALREADY_USED,
+        promiseReminder,
+      );
+
+      mockUsersService.update.mockRejectedValueOnce(
+        userEmailAlreadyInUseException,
+      );
+
+      const updateUserPromise = usersController.update(
+        user.id,
+        updateUserInputDto,
+      );
+
+      await expect(updateUserPromise).rejects.toStrictEqual(
+        new ConflictException(userEmailAlreadyInUseException.message),
+      );
+    });
+
+    it('should throw ConflictException when the phone number is already in use', async () => {
+      const userPhoneNumberAlreadyInUseException = new UserException(
+        UserError.PHONE_NUMBER_ALREADY_USED,
+        promiseReminder,
+      );
+
+      mockUsersService.update.mockRejectedValueOnce(
+        userPhoneNumberAlreadyInUseException,
+      );
+
+      const updateUserPromise = usersController.update(
+        user.id,
+        updateUserInputDto,
+      );
+
+      await expect(updateUserPromise).rejects.toStrictEqual(
+        new ConflictException(userPhoneNumberAlreadyInUseException.message),
+      );
+    });
+
+    it('should rethrow untreated exceptions', async () => {
+      mockUsersService.update.mockRejectedValueOnce(untreatedException);
+
+      const updateUserPromise = usersController.update(
+        user.id,
+        updateUserInputDto,
+      );
+
+      await expect(updateUserPromise).rejects.toStrictEqual(untreatedException);
     });
   });
 });
