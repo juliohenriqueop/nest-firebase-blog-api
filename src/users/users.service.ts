@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectFirebaseAdmin, FirebaseAdmin } from 'nestjs-firebase';
 import { UserRecord, ListUsersResult } from 'firebase-admin/auth';
-import { UpdateRequest } from 'firebase-admin/auth';
+import { UpdateRequest, CreateRequest } from 'firebase-admin/auth';
 import { UserError, UserException } from '@modules/users';
 
 @Injectable()
@@ -13,6 +13,28 @@ export class UsersService {
 
     private readonly config: ConfigService,
   ) {}
+
+  async create(user: CreateRequest): Promise<UserRecord> {
+    try {
+      return await this.firebase.auth.createUser(user);
+    } catch (firebaseAuthError) {
+      if (firebaseAuthError.code === 'auth/email-already-exists') {
+        throw new UserException(
+          UserError.EMAIL_ALREADY_USED,
+          'the informed e-mail is already in use',
+        );
+      }
+
+      if (firebaseAuthError.code === 'auth/phone-number-already-exists') {
+        throw new UserException(
+          UserError.PHONE_NUMBER_ALREADY_USED,
+          'the informed phone number is already in use',
+        );
+      }
+
+      throw firebaseAuthError;
+    }
+  }
 
   async findById(id: string): Promise<UserRecord> {
     try {

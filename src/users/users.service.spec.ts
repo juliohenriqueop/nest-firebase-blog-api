@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigModule } from '@nestjs/config';
 import { FirebaseModule, FirebaseConstants } from 'nestjs-firebase';
 import { UserMetadata, UserRecord, ListUsersResult } from 'firebase-admin/auth';
+import { CreateRequest } from 'firebase-admin/auth';
 import { FirebaseAuthError } from 'firebase-admin/lib/utils/error';
 import { UsersService } from '@modules/users';
 import { UserError } from '@modules/users';
@@ -17,6 +18,7 @@ describe('UsersService', () => {
     name: 'User Name',
     email: 'user@email.com',
     phone: '+1 650-555-3434',
+    password: 'USER_PASSWORD_123456',
   };
 
   const otherUser = {
@@ -24,6 +26,7 @@ describe('UsersService', () => {
     name: 'Other User Name',
     email: 'other_user@email.com',
     phone: '+1 650-555-3434',
+    password: '123456_OTHER_USER_PASSWORD',
   };
 
   const userMetadata: UserMetadata = {
@@ -56,6 +59,16 @@ describe('UsersService', () => {
     toJSON: () => new Object(),
   };
 
+  const createRequest: CreateRequest = {
+    uid: user.id,
+    disabled: false,
+    displayName: user.name,
+    email: user.email,
+    emailVerified: true,
+    phoneNumber: user.phone,
+    password: user.password,
+  };
+
   const usersRecords: UserRecord[] = [userRecord, otherUserRecord];
 
   const usersList: ListUsersResult = {
@@ -73,6 +86,7 @@ describe('UsersService', () => {
 
   const mockFirebaseAdmin = {
     auth: {
+      createUser: jest.fn().mockResolvedValue(userRecord),
       getUser: jest.fn().mockResolvedValue(userRecord),
       getUserByEmail: jest.fn().mockResolvedValue(userRecord),
       getUserByPhoneNumber: jest.fn().mockResolvedValue(userRecord),
@@ -108,6 +122,58 @@ describe('UsersService', () => {
 
   it('should be defined', () => {
     expect(sutUsersService).toBeDefined();
+  });
+
+  describe('create', () => {
+    it('should create user once', async () => {
+      const createdUser = await sutUsersService.create(createRequest);
+
+      expect(mockFirebaseAdmin.auth.createUser).toHaveBeenCalledTimes(1);
+      expect(mockFirebaseAdmin.auth.createUser).toHaveBeenCalledWith(
+        createRequest,
+      );
+      expect(createdUser).toStrictEqual(userRecord);
+    });
+
+    it('should throw EMAIL_ALREADY_USED when user e-mail is already in use', async () => {
+      mockFirebaseAdmin.auth.createUser.mockImplementationOnce(async () => {
+        throw new FirebaseAuthError({
+          code: 'email-already-exists',
+          message: promiseReminder,
+        });
+      });
+
+      const createUserPromise = sutUsersService.create(createRequest);
+
+      await expect(createUserPromise).rejects.toThrowError(
+        expect.objectContaining({ type: UserError.EMAIL_ALREADY_USED }),
+      );
+    });
+
+    it('should throw PHONE_NUMBER_ALREADY_USED when user phone number is already in use', async () => {
+      mockFirebaseAdmin.auth.createUser.mockImplementationOnce(async () => {
+        throw new FirebaseAuthError({
+          code: 'phone-number-already-exists',
+          message: promiseReminder,
+        });
+      });
+
+      const createUserPromise = sutUsersService.create(createRequest);
+
+      await expect(createUserPromise).rejects.toThrowError(
+        expect.objectContaining({ type: UserError.PHONE_NUMBER_ALREADY_USED }),
+      );
+    });
+
+    it('should rethrow untreated exceptions', async () => {
+      mockFirebaseAdmin.auth.createUser.mockRejectedValueOnce(
+        untreatedException,
+      );
+
+      const createUserPromise = sutUsersService.create(createRequest);
+
+      await expect(createUserPromise).rejects.toStrictEqual(untreatedException);
+    });
   });
 
   describe('findById', () => {
