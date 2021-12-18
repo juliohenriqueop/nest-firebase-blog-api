@@ -1,9 +1,12 @@
 import { Controller } from '@nestjs/common';
-import { Get, Patch, Delete } from '@nestjs/common';
+import { Post, Get, Patch, Delete } from '@nestjs/common';
 import { Param, Query, Body } from '@nestjs/common';
 import { NotFoundException, ConflictException } from '@nestjs/common';
 import { HttpCode, HttpStatus } from '@nestjs/common';
 import { UsersService, UserError } from '@modules/users';
+import { CreateUserInputDto, CreateUserOutputDto } from '@modules/users';
+import { toCreateRequestFromCreateUserInputDto } from '@modules/users';
+import { toCreateUserOutputDtoFromUserRecord } from '@modules/users';
 import { FindUserOutputDto } from '@modules/users';
 import { toFindUserOutputDtoFromUserRecord } from '@modules/users';
 import { FindUsersInputDto, FindUsersOutputDto } from '@modules/users';
@@ -15,6 +18,28 @@ import { toUpdateUserOutputDtoFromUserRecord } from '@modules/users';
 @Controller({ path: 'users', version: '1' })
 export class UsersController {
   constructor(private readonly userService: UsersService) {}
+
+  @Post()
+  async create(
+    @Body() properties: CreateUserInputDto,
+  ): Promise<CreateUserOutputDto> {
+    try {
+      const createRequest = toCreateRequestFromCreateUserInputDto(properties);
+      const user = await this.userService.create(createRequest);
+
+      return toCreateUserOutputDtoFromUserRecord(user);
+    } catch (userException) {
+      if (userException.type === UserError.EMAIL_ALREADY_USED) {
+        throw new ConflictException(userException.message);
+      }
+
+      if (userException.type === UserError.PHONE_NUMBER_ALREADY_USED) {
+        throw new ConflictException(userException.message);
+      }
+
+      throw userException;
+    }
+  }
 
   @Get(':id')
   async findById(@Param('id') id: string): Promise<FindUserOutputDto> {

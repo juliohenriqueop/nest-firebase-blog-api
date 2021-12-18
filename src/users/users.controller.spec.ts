@@ -1,12 +1,13 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { UserMetadata, UserRecord, ListUsersResult } from 'firebase-admin/auth';
-import { UpdateRequest } from 'firebase-admin/auth';
+import { UpdateRequest, CreateRequest } from 'firebase-admin/auth';
 import { UsersService, UsersController } from '@modules/users';
 import { NotFoundException, ConflictException } from '@nestjs/common';
 import { UserError, UserException } from '@modules/users';
 import { FindUserOutputDto } from '@modules/users';
 import { FindUsersOutputDto } from '@modules/users';
 import { UpdateUserInputDto, UpdateUserOutputDto } from '@modules/users';
+import { CreateUserInputDto, CreateUserOutputDto } from '@modules/users';
 
 describe('UsersController', () => {
   let usersController: UsersController;
@@ -17,7 +18,9 @@ describe('UsersController', () => {
   const user = {
     id: 'USER_ID',
     email: 'user@email.com',
+    name: 'User Name',
     phone: '+1 650-555-3434',
+    password: 'USER_PASSWORD_123456',
   };
 
   const userMetadata: UserMetadata = {
@@ -105,13 +108,33 @@ describe('UsersController', () => {
     phoneNumber: '+1 650-555-3434',
   };
 
+  const createRequest: CreateRequest = {
+    disabled: false,
+    emailVerified: true,
+    displayName: 'User Name',
+    email: 'user@email.com',
+    password: 'USER_PASSWORD_123456',
+    photoURL: 'https://placeimg.com/640/480/people',
+    phoneNumber: '+1 650-555-3434',
+  };
+
   const updateUserInputDto: UpdateUserInputDto = {
     ...findUserOutputDto,
     password: 'USER_PASSWORD_123456',
   };
   const updateUserOutputDto: UpdateUserOutputDto = findUserOutputDto;
 
+  const createUserInputDto: CreateUserInputDto = {
+    name: user.name,
+    email: user.email,
+    password: user.password,
+    ...updateUserInputDto,
+  };
+
+  const createUserOutputDto: CreateUserOutputDto = findUserOutputDto;
+
   const mockUsersService = {
+    create: jest.fn().mockResolvedValue(userRecord),
     findByEmail: jest.fn().mockResolvedValue(userRecord),
     findByPhoneNumber: jest.fn().mockResolvedValue(userRecord),
     findById: jest.fn().mockResolvedValue(userRecord),
@@ -137,6 +160,57 @@ describe('UsersController', () => {
 
   it('should be defined', () => {
     expect(usersController).toBeDefined();
+  });
+
+  describe('create', () => {
+    it('should create a user', async () => {
+      const createdUser = await usersController.create(createUserInputDto);
+
+      expect(mockUsersService.create).toHaveBeenCalledTimes(1);
+      expect(mockUsersService.create).toHaveBeenCalledWith(createRequest);
+      expect(createdUser).toStrictEqual(createUserOutputDto);
+    });
+
+    it('should throw ConflictException when the e-mail is already in use', async () => {
+      const userEmailAlreadyInUseException = new UserException(
+        UserError.EMAIL_ALREADY_USED,
+        promiseReminder,
+      );
+
+      mockUsersService.create.mockRejectedValueOnce(
+        userEmailAlreadyInUseException,
+      );
+
+      const createUserPromise = usersController.create(createUserInputDto);
+
+      await expect(createUserPromise).rejects.toThrowError(
+        new ConflictException(userEmailAlreadyInUseException.message),
+      );
+    });
+
+    it('should throw ConflictException when the phone number is already in use', async () => {
+      const userPhoneNumberAlreadyInUseException = new UserException(
+        UserError.PHONE_NUMBER_ALREADY_USED,
+        promiseReminder,
+      );
+
+      mockUsersService.create.mockRejectedValueOnce(
+        userPhoneNumberAlreadyInUseException,
+      );
+
+      const createUserPromise = usersController.create(createUserInputDto);
+
+      await expect(createUserPromise).rejects.toThrowError(
+        new ConflictException(userPhoneNumberAlreadyInUseException.message),
+      );
+    });
+
+    it('should rethrow untreated exceptions', async () => {
+      mockUsersService.create.mockRejectedValueOnce(untreatedException);
+
+      const createUserPromise = usersController.create(createUserInputDto);
+      await expect(createUserPromise).rejects.toStrictEqual(untreatedException);
+    });
   });
 
   describe('findById', () => {
