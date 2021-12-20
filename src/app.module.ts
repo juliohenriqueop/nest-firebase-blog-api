@@ -3,6 +3,8 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ServiceAccount } from 'firebase-admin';
 import { FirebaseModule, FirebaseModuleOptions } from 'nestjs-firebase';
 import { AppError, AppException } from '@modules/app';
+import { FirebaseConstants, FirebaseAdmin } from 'nestjs-firebase';
+import { FireormModule } from 'nestjs-fireorm';
 import { AuthModule } from '@modules/auth';
 import { UsersModule } from '@modules/users';
 
@@ -67,6 +69,22 @@ import { UsersModule } from '@modules/users';
         }
 
         return null;
+      },
+    }),
+    FireormModule.forRootAsync({
+      inject: [FirebaseConstants.FIREBASE_TOKEN],
+      useFactory: (firebase: FirebaseAdmin) => {
+        const firestore = firebase.db;
+
+        firestore.settings({
+          ignoreUndefinedProperties: true,
+        });
+
+        const fireormSettings = {
+          firestore: firestore,
+        };
+
+        return fireormSettings;
       },
     }),
     AuthModule,

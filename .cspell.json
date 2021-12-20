@@ -1,5 +1,5 @@
 {
   "version": "0.2",
   "language": "en",
-  "words": ["nestjs", "bearer"]
+  "words": ["nestjs", "bearer", "firestore", "fireorm"]
 }
