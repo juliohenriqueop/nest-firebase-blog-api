@@ -1,6 +1,6 @@
 {
   "extends": ["@commitlint/config-conventional"],
   "rules": {
-    "scope-enum": [2, "always", ["license", "auth", "users"]]
+    "scope-enum": [2, "always", ["license", "auth", "users", "posts"]]
   }
 }
