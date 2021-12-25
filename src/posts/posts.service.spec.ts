@@ -4,8 +4,9 @@ import { getRepositoryToken } from 'nestjs-fireorm';
 import { UsersModule, UsersService } from '@modules/users';
 import { UserError, UserException } from '@modules/users';
 import { PostError, PostException } from '@modules/posts';
-import { PostsService, Post, PostProperties, PostData } from '@modules/posts';
-import { Content } from '@modules/posts';
+import { PostsService } from '@modules/posts';
+import { PostProperties, PostData } from '@modules/posts';
+import { Post, Content } from '@modules/posts';
 
 describe('PostsService', () => {
   let sutPostsService: PostsService;
@@ -62,6 +63,7 @@ describe('PostsService', () => {
     author: author,
     content: {
       create: jest.fn().mockResolvedValue(postContent),
+      findOne: jest.fn().mockResolvedValue(postContent),
     },
   };
 
@@ -71,6 +73,7 @@ describe('PostsService', () => {
 
   const mockPostsRepository = {
     create: jest.fn().mockResolvedValue(postRepositoryOutput),
+    findById: jest.fn().mockResolvedValue(postRepositoryOutput),
   };
 
   const untreatedException = new Error(promiseReminder);
@@ -144,6 +147,58 @@ describe('PostsService', () => {
 
       const createPostPromise = sutPostsService.create(postProperties);
       await expect(createPostPromise).rejects.toStrictEqual(untreatedException);
+    });
+  });
+
+  describe('findById', () => {
+    it('should find a post', async () => {
+      const foundPost = await sutPostsService.findById(post.id);
+
+      expect(mockPostsRepository.findById).toHaveBeenCalledTimes(1);
+      expect(mockPostsRepository.findById).toHaveBeenCalledWith(post.id);
+      expect(foundPost).toStrictEqual(postData);
+    });
+
+    it('should find the post content', async () => {
+      await sutPostsService.findById(post.id);
+
+      const mockFoundPost = await mockPostsRepository.findById(post.id);
+      const mockFoundContent = mockFoundPost.content;
+
+      expect(mockFoundContent.findOne).toHaveBeenCalledTimes(1);
+    });
+
+    it('should throw a POST_NOT_FOUND error when the post is not found', async () => {
+      mockPostsRepository.findById.mockResolvedValueOnce(null);
+
+      const findByIdPromise = sutPostsService.findById(post.id);
+
+      await expect(findByIdPromise).rejects.toThrowError(
+        expect.objectContaining({
+          name: PostException.name,
+          type: PostError.POST_NOT_FOUND,
+        }),
+      );
+    });
+
+    it('should throw a CONTENT_NOT_FOUND error when the post content is not found', async () => {
+      postRepositoryOutput.content.findOne.mockResolvedValueOnce(null);
+
+      const findByIdPromise = sutPostsService.findById(post.id);
+
+      await expect(findByIdPromise).rejects.toThrowError(
+        expect.objectContaining({
+          name: PostException.name,
+          type: PostError.CONTENT_NOT_FOUND,
+        }),
+      );
+    });
+
+    it('should rethrow untreated exceptions', async () => {
+      mockPostsRepository.findById.mockRejectedValueOnce(untreatedException);
+
+      const findByIdPromise = sutPostsService.findById(post.id);
+      await expect(findByIdPromise).rejects.toStrictEqual(untreatedException);
     });
   });
 });

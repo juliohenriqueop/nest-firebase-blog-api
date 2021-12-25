@@ -2,7 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from 'nestjs-fireorm';
 import { BaseFirestoreRepository } from 'fireorm';
 import { UsersService, UserError } from '@modules/users';
-import { Post, PostProperties, PostData } from '@modules/posts';
+import { Post, Content } from '@modules/posts';
+import { PostProperties, PostData } from '@modules/posts';
 import { PostError, PostException } from '@modules/posts';
 import { toPostDataFromPostAndContent } from '@modules/posts';
 
@@ -40,5 +41,25 @@ export class PostsService {
 
       throw userException;
     }
+  }
+
+  async findById(id: string): Promise<PostData> {
+    const postFoundById: Post | null = await this.postsRepository.findById(id);
+
+    if (!postFoundById) {
+      throw new PostException(PostError.POST_NOT_FOUND, 'post not found');
+    }
+
+    const contentFoundById: Content | null =
+      await postFoundById.content.findOne();
+
+    if (!contentFoundById) {
+      throw new PostException(
+        PostError.CONTENT_NOT_FOUND,
+        'post content not found',
+      );
+    }
+
+    return toPostDataFromPostAndContent(postFoundById, contentFoundById);
   }
 }

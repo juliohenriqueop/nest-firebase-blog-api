@@ -1,3 +1,5 @@
 export enum PostError {
   AUTHOR_NOT_FOUND,
+  POST_NOT_FOUND,
+  CONTENT_NOT_FOUND,
 }
