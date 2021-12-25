@@ -74,6 +74,9 @@ describe('PostsService', () => {
   const mockPostsRepository = {
     create: jest.fn().mockResolvedValue(postRepositoryOutput),
     findById: jest.fn().mockResolvedValue(postRepositoryOutput),
+    whereEqualTo: jest.fn().mockReturnValue({
+      findOne: jest.fn().mockResolvedValue(postRepositoryOutput),
+    }),
   };
 
   const untreatedException = new Error(promiseReminder);
@@ -199,6 +202,80 @@ describe('PostsService', () => {
 
       const findByIdPromise = sutPostsService.findById(post.id);
       await expect(findByIdPromise).rejects.toStrictEqual(untreatedException);
+    });
+  });
+
+  describe('findByTitle', () => {
+    it('should find posts', async () => {
+      const foundPost = await sutPostsService.findByTitle(post.title);
+
+      const whereEqualToReturn = mockPostsRepository.whereEqualTo
+        .getMockImplementation()
+        .call(this);
+
+      expect(mockPostsRepository.whereEqualTo).toHaveBeenCalledTimes(1);
+      expect(mockPostsRepository.whereEqualTo).toHaveBeenCalledWith(
+        'title',
+        post.title,
+      );
+      expect(whereEqualToReturn.findOne).toHaveBeenCalledTimes(1);
+      expect(foundPost).toStrictEqual(postData);
+    });
+
+    it('should find the post content', async () => {
+      await sutPostsService.findByTitle(post.title);
+
+      const mockFoundPost = await mockPostsRepository
+        .whereEqualTo('title', post.title)
+        .findOne();
+
+      const mockFoundContent = mockFoundPost.content;
+
+      expect(mockFoundContent.findOne).toHaveBeenCalledTimes(1);
+    });
+
+    it('should throw a POST_NOT_FOUND error when the post is not found', async () => {
+      const whereEqualToReturn = mockPostsRepository.whereEqualTo
+        .getMockImplementation()
+        .call(this);
+
+      whereEqualToReturn.findOne.mockResolvedValueOnce(null);
+
+      const findByTitlePromise = sutPostsService.findByTitle(post.title);
+
+      await expect(findByTitlePromise).rejects.toThrowError(
+        expect.objectContaining({
+          name: PostException.name,
+          type: PostError.POST_NOT_FOUND,
+        }),
+      );
+    });
+
+    it('should throw a CONTENT_NOT_FOUND error when the post content is not found', async () => {
+      postRepositoryOutput.content.findOne.mockResolvedValueOnce(null);
+
+      const findByTitlePromise = sutPostsService.findByTitle(post.title);
+
+      await expect(findByTitlePromise).rejects.toThrowError(
+        expect.objectContaining({
+          name: PostException.name,
+          type: PostError.CONTENT_NOT_FOUND,
+        }),
+      );
+    });
+
+    it('should rethrow untreated exceptions', async () => {
+      const whereEqualToReturn = mockPostsRepository.whereEqualTo
+        .getMockImplementation()
+        .call(this);
+
+      whereEqualToReturn.findOne.mockRejectedValueOnce(untreatedException);
+
+      const findByTitlePromise = sutPostsService.findByTitle(post.title);
+
+      await expect(findByTitlePromise).rejects.toStrictEqual(
+        untreatedException,
+      );
     });
   });
 });

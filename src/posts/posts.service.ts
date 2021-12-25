@@ -62,4 +62,26 @@ export class PostsService {
 
     return toPostDataFromPostAndContent(postFoundById, contentFoundById);
   }
+
+  async findByTitle(title: string): Promise<PostData> {
+    const postFoundByTitle: Post | null = await this.postsRepository
+      .whereEqualTo('title', title)
+      .findOne();
+
+    if (!postFoundByTitle) {
+      throw new PostException(PostError.POST_NOT_FOUND, 'post not found');
+    }
+
+    const contentFoundByTitle: Content | null =
+      await postFoundByTitle.content.findOne();
+
+    if (!contentFoundByTitle) {
+      throw new PostException(
+        PostError.CONTENT_NOT_FOUND,
+        'post content not found',
+      );
+    }
+
+    return toPostDataFromPostAndContent(postFoundByTitle, contentFoundByTitle);
+  }
 }
