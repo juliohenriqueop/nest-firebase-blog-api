@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { ConfigModule } from '@nestjs/config';
 import { FireormModule } from 'nestjs-fireorm';
 import { getRepositoryToken } from 'nestjs-fireorm';
 import { UsersModule, UsersService } from '@modules/users';
@@ -35,6 +36,16 @@ describe('PostsService', () => {
     value: 'POST_CONTENT',
   };
 
+  const otherPost: Omit<Post, 'content'> = {
+    id: 'OTHER_POST_ID',
+    title: 'OTHER_POST_TITLE',
+    thumbnailURL: 'OTHER_POST_THUMBNAIL',
+    author: {
+      id: 'OTHER_AUTHOR_ID',
+      name: 'OTHER_AUTHOR_NAME',
+    },
+  };
+
   const postProperties: PostProperties = {
     title: post.title,
     thumbnailURL: post.thumbnailURL,
@@ -67,6 +78,14 @@ describe('PostsService', () => {
     },
   };
 
+  const allPostsOutput: Post[] = [post, otherPost];
+
+  const customQuery = {
+    limit: jest.fn().mockReturnValue({
+      offset: jest.fn(),
+    }),
+  };
+
   const mockUsersService = {
     findById: jest.fn().mockResolvedValue(authorRecord),
   };
@@ -77,6 +96,13 @@ describe('PostsService', () => {
     whereEqualTo: jest.fn().mockReturnValue({
       findOne: jest.fn().mockResolvedValue(postRepositoryOutput),
     }),
+    customQuery: jest.fn().mockImplementation((query) => {
+      query(customQuery);
+
+      return {
+        find: jest.fn().mockResolvedValue(allPostsOutput),
+      };
+    }),
   };
 
   const untreatedException = new Error(promiseReminder);
@@ -84,7 +110,7 @@ describe('PostsService', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      imports: [FireormModule.forFeature([Post]), UsersModule],
+      imports: [FireormModule.forFeature([Post]), ConfigModule, UsersModule],
       providers: [PostsService],
     })
       .overrideProvider(UsersService)
@@ -276,6 +302,32 @@ describe('PostsService', () => {
       await expect(findByTitlePromise).rejects.toStrictEqual(
         untreatedException,
       );
+    });
+  });
+
+  describe('findAll', () => {
+    it('should find all users', async () => {
+      const currentPage = Math.ceil(Math.random() * 100);
+
+      const posts = await sutPostsService.findAll(currentPage);
+
+      const queryLimitReturn = customQuery.limit
+        .getMockImplementation()
+        .call(this);
+
+      expect(mockPostsRepository.customQuery).toHaveBeenCalledTimes(1);
+      expect(customQuery.limit).toHaveBeenCalledTimes(1);
+      expect(queryLimitReturn.offset).toHaveBeenCalledTimes(1);
+      expect(posts).toMatchObject(allPostsOutput);
+    });
+
+    it('should rethrow untreated exceptions', async () => {
+      mockPostsRepository.customQuery.mockImplementationOnce(() => {
+        throw untreatedException;
+      });
+
+      const findAllPromise = sutPostsService.findAll();
+      await expect(findAllPromise).rejects.toStrictEqual(untreatedException);
     });
   });
 });

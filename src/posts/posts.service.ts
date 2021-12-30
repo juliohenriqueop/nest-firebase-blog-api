@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from 'nestjs-fireorm';
 import { BaseFirestoreRepository } from 'fireorm';
 import { UsersService, UserError } from '@modules/users';
@@ -14,6 +15,8 @@ export class PostsService {
 
     @InjectRepository(Post)
     private readonly postsRepository: BaseFirestoreRepository<Post>,
+
+    private readonly configService: ConfigService,
   ) {}
 
   async create(properties: PostProperties): Promise<PostData> {
@@ -83,5 +86,19 @@ export class PostsService {
     }
 
     return toPostDataFromPostAndContent(postFoundByTitle, contentFoundByTitle);
+  }
+
+  async findAll(page = 0): Promise<PostData[]> {
+    const postsPerPageConfig = this.configService.get<string>('POSTS_PER_PAGE');
+    const postsPerPage = parseInt(postsPerPageConfig) || 25;
+    const currentPage = page * postsPerPage;
+
+    const foundPosts = await this.postsRepository
+      .customQuery(async (query) => {
+        return query.limit(postsPerPage).offset(currentPage);
+      })
+      .find();
+
+    return foundPosts.map((post) => toPostDataFromPostAndContent(post));
   }
 }
