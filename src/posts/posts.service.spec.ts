@@ -75,10 +75,13 @@ describe('PostsService', () => {
     content: {
       create: jest.fn().mockResolvedValue(postContent),
       findOne: jest.fn().mockResolvedValue(postContent),
+      update: jest.fn().mockResolvedValue(postContent),
     },
   };
 
   const allPostsOutput: Post[] = [post, otherPost];
+
+  const updatePostsProperties = post;
 
   const customQuery = {
     limit: jest.fn().mockReturnValue({
@@ -103,6 +106,7 @@ describe('PostsService', () => {
         find: jest.fn().mockResolvedValue(allPostsOutput),
       };
     }),
+    update: jest.fn().mockResolvedValue(postRepositoryOutput),
   };
 
   const untreatedException = new Error(promiseReminder);
@@ -328,6 +332,80 @@ describe('PostsService', () => {
 
       const findAllPromise = sutPostsService.findAll();
       await expect(findAllPromise).rejects.toStrictEqual(untreatedException);
+    });
+  });
+
+  describe('update', () => {
+    it('should update the post', async () => {
+      const updatedPost = await sutPostsService.update(post.id, postProperties);
+
+      expect(mockPostsRepository.findById).toHaveBeenCalledTimes(1);
+      expect(mockPostsRepository.findById).toHaveBeenCalledWith(post.id);
+      expect(mockPostsRepository.update).toHaveBeenCalledTimes(1);
+      expect(mockPostsRepository.update).toHaveBeenCalledWith(
+        updatePostsProperties,
+      );
+      expect(updatedPost).toStrictEqual(postData);
+    });
+
+    it('should update the post content', async () => {
+      await sutPostsService.update(post.id, postProperties);
+
+      const updatedPost = await mockPostsRepository.update(post);
+      const updatedContent = updatedPost.content;
+
+      expect(updatedContent.update).toHaveBeenCalledTimes(1);
+      expect(updatedContent.update).toHaveBeenCalledWith(postContent);
+    });
+
+    it("should return the old content when it doesn't update", async () => {
+      const postPropertiesWithoutContent = { ...postProperties };
+      delete postPropertiesWithoutContent.content;
+
+      const updatedPost = await sutPostsService.update(post.id, postProperties);
+
+      expect(updatedPost).toStrictEqual(postData);
+    });
+
+    it('should use an existing user as author', async () => {
+      const updatedPost = await sutPostsService.update(post.id, postProperties);
+
+      expect(mockUsersService.findById).toHaveBeenCalledTimes(1);
+      expect(mockUsersService.findById).toHaveBeenCalledWith(author.id);
+      expect(updatedPost).toMatchObject({ author: author });
+    });
+
+    it('should throw a POST_NOT_FOUND error when the post is not found', async () => {
+      mockPostsRepository.findById.mockResolvedValueOnce(undefined);
+
+      const updatePostPromise = sutPostsService.update(post.id, postProperties);
+
+      await expect(updatePostPromise).rejects.toThrowError(
+        expect.objectContaining({
+          name: PostException.name,
+          type: PostError.POST_NOT_FOUND,
+        }),
+      );
+    });
+
+    it('should throw an AUTHOR_NOT_FOUND error when the author is not found', async () => {
+      mockUsersService.findById.mockRejectedValueOnce(null);
+
+      const updatePostPromise = sutPostsService.update(post.id, postProperties);
+
+      await expect(updatePostPromise).rejects.toThrowError(
+        expect.objectContaining({
+          name: PostException.name,
+          type: PostError.AUTHOR_NOT_FOUND,
+        }),
+      );
+    });
+
+    it('should rethrow untreated exceptions', async () => {
+      mockPostsRepository.update.mockRejectedValueOnce(untreatedException);
+
+      const updatePostPromise = sutPostsService.update(post.id, postProperties);
+      await expect(updatePostPromise).rejects.toStrictEqual(untreatedException);
     });
   });
 });

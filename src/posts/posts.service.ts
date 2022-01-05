@@ -101,4 +101,47 @@ export class PostsService {
 
     return foundPosts.map((post) => toPostDataFromPostAndContent(post));
   }
+
+  async update(id: string, properties: PostProperties): Promise<PostData> {
+    const post: Post | null = await this.postsRepository.findById(id);
+
+    if (!post) {
+      throw new PostException(PostError.POST_NOT_FOUND, 'post not found');
+    }
+
+    let author = null;
+
+    if (properties.authorId) {
+      try {
+        author = await this.usersService.findById(properties.authorId);
+      } catch (userException) {
+        throw new PostException(PostError.AUTHOR_NOT_FOUND, 'author not found');
+      }
+    }
+
+    const updatedPost = await this.postsRepository.update({
+      id: id,
+      author: {
+        id: author?.uid || post.author.id,
+        name: author?.displayName || post.author.name,
+      },
+      title: properties.title || post.title,
+      thumbnailURL: properties.thumbnailURL || post.thumbnailURL,
+    });
+
+    const currentContent = await post.content.findOne();
+
+    if (properties.content) {
+      const content = await post.content.update({
+        id: currentContent.id,
+        value: properties.content,
+      });
+
+      const updatedContent = content as Content;
+
+      return toPostDataFromPostAndContent(updatedPost, updatedContent);
+    }
+
+    return toPostDataFromPostAndContent(updatedPost, currentContent);
+  }
 }
