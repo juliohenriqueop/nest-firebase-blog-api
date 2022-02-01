@@ -144,4 +144,14 @@ export class PostsService {
 
     return toPostDataFromPostAndContent(updatedPost, currentContent);
   }
+
+  async delete(id: string): Promise<void> {
+    const post = await this.postsRepository.findById(id);
+
+    if (!post) {
+      throw new PostException(PostError.POST_NOT_FOUND, 'post not found');
+    }
+
+    return this.postsRepository.delete(id);
+  }
 }

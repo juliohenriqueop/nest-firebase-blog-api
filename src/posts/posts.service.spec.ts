@@ -107,6 +107,7 @@ describe('PostsService', () => {
       };
     }),
     update: jest.fn().mockResolvedValue(postRepositoryOutput),
+    delete: jest.fn().mockResolvedValue(undefined),
   };
 
   const untreatedException = new Error(promiseReminder);
@@ -406,6 +407,42 @@ describe('PostsService', () => {
 
       const updatePostPromise = sutPostsService.update(post.id, postProperties);
       await expect(updatePostPromise).rejects.toStrictEqual(untreatedException);
+    });
+  });
+
+  describe('delete', () => {
+    it('should find the post', async () => {
+      sutPostsService.delete(post.id);
+
+      expect(mockPostsRepository.findById).toHaveBeenCalledTimes(1);
+      expect(mockPostsRepository.findById).toHaveBeenCalledWith(post.id);
+    });
+
+    it('should throw POST_NOT_FOUND when the post is not found', async () => {
+      mockPostsRepository.findById.mockResolvedValueOnce(null);
+
+      const deletePostPromise = sutPostsService.delete(post.id);
+
+      await expect(deletePostPromise).rejects.toThrowError(
+        expect.objectContaining({
+          name: PostException.name,
+          type: PostError.POST_NOT_FOUND,
+        }),
+      );
+    });
+
+    it('should delete users', async () => {
+      await sutPostsService.delete(post.id);
+
+      expect(mockPostsRepository.delete).toHaveBeenCalledTimes(1);
+      expect(mockPostsRepository.delete).toHaveBeenCalledWith(post.id);
+    });
+
+    it('should rethrow untreated exceptions', async () => {
+      mockPostsRepository.findById.mockRejectedValueOnce(untreatedException);
+
+      const deletePostPromise = sutPostsService.delete(post.id);
+      await expect(deletePostPromise).rejects.toStrictEqual(untreatedException);
     });
   });
 });
