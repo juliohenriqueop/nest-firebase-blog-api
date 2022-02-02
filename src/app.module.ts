@@ -7,6 +7,7 @@ import { FirebaseConstants, FirebaseAdmin } from 'nestjs-firebase';
 import { FireormModule } from 'nestjs-fireorm';
 import { AuthModule } from '@modules/auth';
 import { UsersModule } from '@modules/users';
+import { PostsModule } from '@modules/posts';
 
 @Module({
   imports: [
@@ -89,6 +90,7 @@ import { UsersModule } from '@modules/users';
     }),
     AuthModule,
     UsersModule,
+    PostsModule,
   ],
   controllers: [],
   providers: [],
