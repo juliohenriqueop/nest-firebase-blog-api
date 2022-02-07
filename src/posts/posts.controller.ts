@@ -1,5 +1,5 @@
 import { Controller } from '@nestjs/common';
-import { Post, Get } from '@nestjs/common';
+import { Post, Get, Patch } from '@nestjs/common';
 import { Body, Param, Query } from '@nestjs/common';
 import { NotFoundException } from '@nestjs/common';
 import { PostsService, PostError } from '@modules/posts';
@@ -9,6 +9,9 @@ import { toCreatePostOutputDtoFromPostData } from '@modules/posts';
 import { FindPostsInputDto, FindPostOutputDto } from '@modules/posts';
 import { toFindPostOutputDtoFromPostData } from '@modules/posts';
 import { FindPostsOutputDto } from '@modules/posts';
+import { UpdatePostInputDto, UpdatePostOutputDto } from '@modules/posts';
+import { toPostPropertiesFromUpdatePostInputDto } from '@modules/posts';
+import { toUpdatePostOutputDtoFromPostData } from '@modules/posts';
 
 @Controller({ path: 'posts', version: '1' })
 export class PostsController {
@@ -70,6 +73,29 @@ export class PostsController {
       }
 
       throw findException;
+    }
+  }
+
+  @Patch(':id')
+  async update(
+    @Param('id') id: string,
+    @Body() properties: UpdatePostInputDto,
+  ): Promise<UpdatePostOutputDto> {
+    try {
+      const postProperties = toPostPropertiesFromUpdatePostInputDto(properties);
+      const postData = await this.postsService.update(id, postProperties);
+
+      return toUpdatePostOutputDtoFromPostData(postData);
+    } catch (updateException) {
+      if (updateException.type === PostError.POST_NOT_FOUND) {
+        throw new NotFoundException(updateException.message);
+      }
+
+      if (updateException.type === PostError.AUTHOR_NOT_FOUND) {
+        throw new NotFoundException(updateException.message);
+      }
+
+      throw updateException;
     }
   }
 }

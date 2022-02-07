@@ -4,6 +4,7 @@ import { NotFoundException } from '@nestjs/common';
 import { PostsService } from '@modules/posts';
 import { CreatePostInputDto, CreatePostOutputDto } from '@modules/posts';
 import { FindPostOutputDto, FindPostsOutputDto } from '@modules/posts';
+import { UpdatePostInputDto, UpdatePostOutputDto } from '@modules/posts';
 import { PostException, PostError } from '@modules/posts';
 
 describe('PostsController', () => {
@@ -69,11 +70,15 @@ describe('PostsController', () => {
 
   const postsPage = Number.MAX_SAFE_INTEGER;
 
+  const updatePostInputDto: UpdatePostInputDto = createPostInputDto;
+  const updatePostOutputDto: UpdatePostOutputDto = createPostOutputDto;
+
   const mockPostsService = {
     create: jest.fn().mockResolvedValue(createPostOutputDto),
     findById: jest.fn().mockResolvedValue(findPostOutputDto),
     findByTitle: jest.fn().mockResolvedValue(findPostOutputDto),
     findAll: jest.fn().mockResolvedValue(allPosts),
+    update: jest.fn().mockResolvedValue(updatePostOutputDto),
   };
 
   const untreatedException = new Error(promiseReminder);
@@ -218,6 +223,69 @@ describe('PostsController', () => {
         const findAllPromise = sutPostsController.find({ page: postsPage });
         await expect(findAllPromise).rejects.toStrictEqual(untreatedException);
       });
+    });
+  });
+
+  describe('update', () => {
+    it('should update posts', async () => {
+      const updatedPost = await sutPostsController.update(
+        post.id,
+        updatePostInputDto,
+      );
+
+      expect(mockPostsService.update).toHaveReturnedTimes(1);
+      expect(mockPostsService.update).toHaveBeenCalledWith(
+        post.id,
+        updatePostInputDto,
+      );
+      expect(updatedPost).toStrictEqual(updatePostOutputDto);
+    });
+
+    it('should throw NotFoundException when the post is not found', async () => {
+      const postNotFoundException = new PostException(
+        PostError.POST_NOT_FOUND,
+        promiseReminder,
+      );
+
+      mockPostsService.update.mockRejectedValueOnce(postNotFoundException);
+
+      const updatePostPromise = sutPostsController.update(
+        post.id,
+        updatePostInputDto,
+      );
+
+      await expect(updatePostPromise).rejects.toStrictEqual(
+        new NotFoundException(postNotFoundException.message),
+      );
+    });
+
+    it('should throw NotFoundException when the author is not found', async () => {
+      const authorNotFoundException = new PostException(
+        PostError.AUTHOR_NOT_FOUND,
+        promiseReminder,
+      );
+
+      mockPostsService.update.mockRejectedValueOnce(authorNotFoundException);
+
+      const updatePostPromise = sutPostsController.update(
+        post.id,
+        updatePostInputDto,
+      );
+
+      await expect(updatePostPromise).rejects.toStrictEqual(
+        new NotFoundException(authorNotFoundException.message),
+      );
+    });
+
+    it('should rethrow untreated exceptions', async () => {
+      mockPostsService.update.mockRejectedValueOnce(untreatedException);
+
+      const updatePostPromise = sutPostsController.update(
+        post.id,
+        updatePostInputDto,
+      );
+
+      await expect(updatePostPromise).rejects.toStrictEqual(untreatedException);
     });
   });
 });
