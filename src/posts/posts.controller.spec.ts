@@ -79,6 +79,7 @@ describe('PostsController', () => {
     findByTitle: jest.fn().mockResolvedValue(findPostOutputDto),
     findAll: jest.fn().mockResolvedValue(allPosts),
     update: jest.fn().mockResolvedValue(updatePostOutputDto),
+    delete: jest.fn().mockResolvedValue(undefined),
   };
 
   const untreatedException = new Error(promiseReminder);
@@ -286,6 +287,37 @@ describe('PostsController', () => {
       );
 
       await expect(updatePostPromise).rejects.toStrictEqual(untreatedException);
+    });
+  });
+
+  describe('delete', () => {
+    it('should delete posts', async () => {
+      await sutPostsController.delete(post.id);
+
+      expect(mockPostsService.delete).toHaveBeenCalledTimes(1);
+      expect(mockPostsService.delete).toHaveBeenCalledWith(post.id);
+    });
+
+    it('should throw NotFoundException when the post is not found', async () => {
+      const postNotFoundException = new PostException(
+        PostError.POST_NOT_FOUND,
+        promiseReminder,
+      );
+
+      mockPostsService.delete.mockRejectedValueOnce(postNotFoundException);
+
+      const deletePostPromise = sutPostsController.delete(post.id);
+
+      await expect(deletePostPromise).rejects.toStrictEqual(
+        new NotFoundException(postNotFoundException.message),
+      );
+    });
+
+    it('should rethrow untreated exceptions', async () => {
+      mockPostsService.delete.mockRejectedValueOnce(untreatedException);
+
+      const deletePostPromise = sutPostsController.delete(post.id);
+      await expect(deletePostPromise).rejects.toStrictEqual(untreatedException);
     });
   });
 });

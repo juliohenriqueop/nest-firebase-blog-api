@@ -1,6 +1,7 @@
 import { Controller } from '@nestjs/common';
-import { Post, Get, Patch } from '@nestjs/common';
+import { Post, Get, Patch, Delete } from '@nestjs/common';
 import { Body, Param, Query } from '@nestjs/common';
+import { HttpCode, HttpStatus } from '@nestjs/common';
 import { NotFoundException } from '@nestjs/common';
 import { PostsService, PostError } from '@modules/posts';
 import { CreatePostInputDto, CreatePostOutputDto } from '@modules/posts';
@@ -96,6 +97,20 @@ export class PostsController {
       }
 
       throw updateException;
+    }
+  }
+
+  @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async delete(@Param('id') id: string): Promise<void> {
+    try {
+      return await this.postsService.delete(id);
+    } catch (deletePostException) {
+      if (deletePostException.type === PostError.POST_NOT_FOUND) {
+        throw new NotFoundException(deletePostException.message);
+      }
+
+      throw deletePostException;
     }
   }
 }
