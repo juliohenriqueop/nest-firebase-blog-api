@@ -3,6 +3,7 @@ import { NestFactory } from '@nestjs/core';
 import { ConfigService } from '@nestjs/config';
 import { VersioningType, VERSION_NEUTRAL } from '@nestjs/common';
 import { ValidationPipe } from '@nestjs/common';
+import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from '@modules/app';
 import { AppError, AppException } from '@modules/app';
 import { ConsoleColor } from '@modules/app';
@@ -34,6 +35,17 @@ async function bootstrap() {
       transform: true,
     }),
   );
+
+  const swaggerConfig = new DocumentBuilder()
+    .setTitle('Nest Firebase Blog Api')
+    .setDescription(
+      'An API to manage users and blog posts written in TypeScript using NestJS Framework.',
+    )
+    .setVersion('1.0')
+    .build();
+
+  const swaggerDocument = SwaggerModule.createDocument(app, swaggerConfig);
+  SwaggerModule.setup('api/v1', app, swaggerDocument);
 
   const portConfig = configService.get<string>('PORT');
   const port = parseInt(portConfig) || 3000;
