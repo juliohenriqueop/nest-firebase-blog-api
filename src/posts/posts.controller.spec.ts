@@ -3,7 +3,7 @@ import { PostsController } from '@modules/posts';
 import { NotFoundException } from '@nestjs/common';
 import { PostsService } from '@modules/posts';
 import { CreatePostInputDto, CreatePostOutputDto } from '@modules/posts';
-import { FindPostOutputDto } from '@modules/posts';
+import { FindPostOutputDto, FindPostsOutputDto } from '@modules/posts';
 import { PostException, PostError } from '@modules/posts';
 
 describe('PostsController', () => {
@@ -24,6 +24,14 @@ describe('PostsController', () => {
     name: 'AUTHOR_NAME',
   };
 
+  const otherPost = {
+    id: 'OTHER_POSTS_ID',
+    title: 'OTHER_POST_TITLE',
+    thumbnailURL: 'OTHER_THUMBNAIL_URL',
+    authorId: 'OTHER_POSTS_ID',
+    content: 'OTHER_POSTS_CONTENT',
+  };
+
   const createPostInputDto: CreatePostInputDto = {
     title: post.title,
     thumbnailURL: post.thumbnailURL,
@@ -39,11 +47,33 @@ describe('PostsController', () => {
     content: post.content,
   };
 
+  const otherPostOutputDto: FindPostOutputDto = {
+    id: otherPost.id,
+    title: otherPost.title,
+    thumbnailURL: otherPost.thumbnailURL,
+    author: author,
+    content: otherPost.content,
+  };
+
+  const allPosts = [createPostOutputDto, otherPostOutputDto];
+
   const findPostOutputDto: FindPostOutputDto = createPostOutputDto;
+
+  const findPostByTitleOutputDto: FindPostsOutputDto = {
+    posts: [createPostOutputDto],
+  };
+
+  const findAllPostsOutputDto: FindPostsOutputDto = {
+    posts: allPosts,
+  };
+
+  const postsPage = Number.MAX_SAFE_INTEGER;
 
   const mockPostsService = {
     create: jest.fn().mockResolvedValue(createPostOutputDto),
     findById: jest.fn().mockResolvedValue(findPostOutputDto),
+    findByTitle: jest.fn().mockResolvedValue(findPostOutputDto),
+    findAll: jest.fn().mockResolvedValue(allPosts),
   };
 
   const untreatedException = new Error(promiseReminder);
@@ -126,6 +156,68 @@ describe('PostsController', () => {
 
       const findByIdPromise = sutPostsController.findById(post.id);
       await expect(findByIdPromise).rejects.toStrictEqual(untreatedException);
+    });
+  });
+
+  describe('find', () => {
+    describe('by title', () => {
+      it('should find posts', async () => {
+        const createdPost = await sutPostsController.find({
+          title: post.title,
+        });
+
+        expect(mockPostsService.findByTitle).toHaveBeenCalledTimes(1);
+        expect(mockPostsService.findByTitle).toHaveBeenCalledWith(post.title);
+        expect(createdPost).toStrictEqual(findPostByTitleOutputDto);
+      });
+
+      it('should throw NotFoundException when the post is not found', async () => {
+        const postNotFoundException = new PostException(
+          PostError.POST_NOT_FOUND,
+          promiseReminder,
+        );
+
+        mockPostsService.findByTitle.mockRejectedValueOnce(
+          postNotFoundException,
+        );
+
+        const findByTitlePromise = sutPostsController.find({
+          title: post.title,
+        });
+
+        await expect(findByTitlePromise).rejects.toStrictEqual(
+          new NotFoundException(postNotFoundException.message),
+        );
+      });
+
+      it('should rethrow untreated exceptions', async () => {
+        mockPostsService.findByTitle.mockRejectedValueOnce(untreatedException);
+
+        const findByTitlePromise = sutPostsController.find({
+          title: post.title,
+        });
+
+        await expect(findByTitlePromise).rejects.toStrictEqual(
+          untreatedException,
+        );
+      });
+    });
+
+    describe('All', () => {
+      it('should find all posts', async () => {
+        const posts = await sutPostsController.find({ page: postsPage });
+
+        expect(mockPostsService.findAll).toHaveBeenCalledTimes(1);
+        expect(mockPostsService.findAll).toHaveBeenCalledWith(postsPage);
+        expect(posts).toStrictEqual(findAllPostsOutputDto);
+      });
+
+      it('should rethrow untreated exceptions', async () => {
+        mockPostsService.findAll.mockRejectedValueOnce(untreatedException);
+
+        const findAllPromise = sutPostsController.find({ page: postsPage });
+        await expect(findAllPromise).rejects.toStrictEqual(untreatedException);
+      });
     });
   });
 });

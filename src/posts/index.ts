@@ -8,6 +8,8 @@ export * from './post-data';
 export * from './dto/create-post.input';
 export * from './dto/create-post.output';
 export * from './dto/find-post.output';
+export * from './dto/find-posts.input';
+export * from './dto/find-posts.output';
 export * from './adapters/to-post-data-from-post-and-content';
 export * from './adapters/to-post-properties-from-create-post-input-dto';
 export * from './adapters/to-create-post-output-dto-from-post-data';

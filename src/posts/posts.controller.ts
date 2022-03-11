@@ -1,13 +1,14 @@
 import { Controller } from '@nestjs/common';
 import { Post, Get } from '@nestjs/common';
-import { Body, Param } from '@nestjs/common';
+import { Body, Param, Query } from '@nestjs/common';
 import { NotFoundException } from '@nestjs/common';
 import { PostsService, PostError } from '@modules/posts';
 import { CreatePostInputDto, CreatePostOutputDto } from '@modules/posts';
 import { toPostPropertiesFromCreatePostInputDto } from '@modules/posts';
 import { toCreatePostOutputDtoFromPostData } from '@modules/posts';
-import { FindPostOutputDto } from '@modules/posts';
+import { FindPostsInputDto, FindPostOutputDto } from '@modules/posts';
 import { toFindPostOutputDtoFromPostData } from '@modules/posts';
+import { FindPostsOutputDto } from '@modules/posts';
 
 @Controller({ path: 'posts', version: '1' })
 export class PostsController {
@@ -40,6 +41,35 @@ export class PostsController {
       }
 
       throw findByIdException;
+    }
+  }
+
+  @Get()
+  async find(@Query() findBy: FindPostsInputDto): Promise<FindPostsOutputDto> {
+    try {
+      const response: FindPostsOutputDto = {
+        posts: [],
+      };
+
+      if (findBy.title) {
+        const postData = await this.postsService.findByTitle(findBy.title);
+        response.posts.push(toFindPostOutputDtoFromPostData(postData));
+
+        return response;
+      }
+
+      const postsData = await this.postsService.findAll(findBy.page);
+      postsData.map((postsData) =>
+        response.posts.push(toFindPostOutputDtoFromPostData(postsData)),
+      );
+
+      return response;
+    } catch (findException) {
+      if (findException.type === PostError.POST_NOT_FOUND) {
+        throw new NotFoundException(findException.message);
+      }
+
+      throw findException;
     }
   }
 }
