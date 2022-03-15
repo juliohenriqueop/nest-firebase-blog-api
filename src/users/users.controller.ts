@@ -5,24 +5,32 @@ import { NotFoundException, ConflictException } from '@nestjs/common';
 import { HttpCode, HttpStatus } from '@nestjs/common';
 import { UseGuards } from '@nestjs/common';
 import { FirebaseBearerGuard } from '@modules/auth';
+import { SwaggerUsers } from '@modules/users';
 import { UsersService, UserError } from '@modules/users';
+import { SwaggerCreateUser } from '@modules/users';
 import { CreateUserInputDto, CreateUserOutputDto } from '@modules/users';
 import { toCreateRequestFromCreateUserInputDto } from '@modules/users';
 import { toCreateUserOutputDtoFromUserRecord } from '@modules/users';
+import { SwaggerFindUserById } from '@modules/users';
 import { FindUserOutputDto } from '@modules/users';
 import { toFindUserOutputDtoFromUserRecord } from '@modules/users';
+import { SwaggerFindUsers } from '@modules/users';
 import { FindUsersInputDto, FindUsersOutputDto } from '@modules/users';
 import { toFindUsersOutputDtoFromListUsersResult } from '@modules/users';
+import { SwaggerUpdateUser } from '@modules/users';
 import { UpdateUserInputDto, UpdateUserOutputDto } from '@modules/users';
 import { toUpdateRequestFromUpdateUserInputDto } from '@modules/users';
 import { toUpdateUserOutputDtoFromUserRecord } from '@modules/users';
+import { SwaggerDeleteUser } from '@modules/users';
 
 @UseGuards(FirebaseBearerGuard)
 @Controller({ path: 'users', version: '1' })
+@SwaggerUsers()
 export class UsersController {
   constructor(private readonly userService: UsersService) {}
 
   @Post()
+  @SwaggerCreateUser()
   async create(
     @Body() properties: CreateUserInputDto,
   ): Promise<CreateUserOutputDto> {
@@ -45,6 +53,7 @@ export class UsersController {
   }
 
   @Get(':id')
+  @SwaggerFindUserById()
   async findById(@Param('id') id: string): Promise<FindUserOutputDto> {
     try {
       const user = await this.userService.findById(id);
@@ -59,6 +68,7 @@ export class UsersController {
   }
 
   @Get()
+  @SwaggerFindUsers()
   async find(@Query() findBy: FindUsersInputDto): Promise<FindUsersOutputDto> {
     try {
       const response: FindUsersOutputDto = {
@@ -97,6 +107,7 @@ export class UsersController {
   }
 
   @Patch(':id')
+  @SwaggerUpdateUser()
   async update(
     @Param('id') id: string,
     @Body() properties: UpdateUserInputDto,
@@ -125,6 +136,7 @@ export class UsersController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
+  @SwaggerDeleteUser()
   async delete(@Param('id') id: string): Promise<void> {
     try {
       return await this.userService.delete(id);
