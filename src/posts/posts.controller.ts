@@ -5,23 +5,31 @@ import { HttpCode, HttpStatus } from '@nestjs/common';
 import { NotFoundException } from '@nestjs/common';
 import { UseGuards } from '@nestjs/common';
 import { FirebaseBearerGuard } from '@modules/auth';
+import { SwaggerPosts } from '@modules/posts';
 import { PostsService, PostError } from '@modules/posts';
+import { SwaggerCreatePost } from '@modules/posts';
 import { CreatePostInputDto, CreatePostOutputDto } from '@modules/posts';
 import { toPostPropertiesFromCreatePostInputDto } from '@modules/posts';
 import { toCreatePostOutputDtoFromPostData } from '@modules/posts';
+import { SwaggerFindPostById } from '@modules/posts';
 import { FindPostsInputDto, FindPostOutputDto } from '@modules/posts';
 import { toFindPostOutputDtoFromPostData } from '@modules/posts';
+import { SwaggerFindPosts } from '@modules/posts';
 import { FindPostsOutputDto } from '@modules/posts';
+import { SwaggerUpdatePost } from '@modules/posts';
 import { UpdatePostInputDto, UpdatePostOutputDto } from '@modules/posts';
 import { toPostPropertiesFromUpdatePostInputDto } from '@modules/posts';
 import { toUpdatePostOutputDtoFromPostData } from '@modules/posts';
+import { SwaggerDeletePost } from '@modules/posts';
 
 @UseGuards(FirebaseBearerGuard)
 @Controller({ path: 'posts', version: '1' })
+@SwaggerPosts()
 export class PostsController {
   constructor(private readonly postsService: PostsService) {}
 
   @Post()
+  @SwaggerCreatePost()
   async create(@Body() post: CreatePostInputDto): Promise<CreatePostOutputDto> {
     try {
       const postProperties = toPostPropertiesFromCreatePostInputDto(post);
@@ -38,6 +46,7 @@ export class PostsController {
   }
 
   @Get(':id')
+  @SwaggerFindPostById()
   async findById(@Param('id') id: string): Promise<FindPostOutputDto> {
     try {
       const postData = await this.postsService.findById(id);
@@ -52,6 +61,7 @@ export class PostsController {
   }
 
   @Get()
+  @SwaggerFindPosts()
   async find(@Query() findBy: FindPostsInputDto): Promise<FindPostsOutputDto> {
     try {
       const response: FindPostsOutputDto = {
@@ -81,6 +91,7 @@ export class PostsController {
   }
 
   @Patch(':id')
+  @SwaggerUpdatePost()
   async update(
     @Param('id') id: string,
     @Body() properties: UpdatePostInputDto,
@@ -105,6 +116,7 @@ export class PostsController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
+  @SwaggerDeletePost()
   async delete(@Param('id') id: string): Promise<void> {
     try {
       return await this.postsService.delete(id);
