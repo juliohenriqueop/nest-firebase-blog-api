@@ -3,6 +3,8 @@ import { Post, Get, Patch, Delete } from '@nestjs/common';
 import { Body, Param, Query } from '@nestjs/common';
 import { HttpCode, HttpStatus } from '@nestjs/common';
 import { NotFoundException } from '@nestjs/common';
+import { UseGuards } from '@nestjs/common';
+import { FirebaseBearerGuard } from '@modules/auth';
 import { PostsService, PostError } from '@modules/posts';
 import { CreatePostInputDto, CreatePostOutputDto } from '@modules/posts';
 import { toPostPropertiesFromCreatePostInputDto } from '@modules/posts';
@@ -14,6 +16,7 @@ import { UpdatePostInputDto, UpdatePostOutputDto } from '@modules/posts';
 import { toPostPropertiesFromUpdatePostInputDto } from '@modules/posts';
 import { toUpdatePostOutputDtoFromPostData } from '@modules/posts';
 
+@UseGuards(FirebaseBearerGuard)
 @Controller({ path: 'posts', version: '1' })
 export class PostsController {
   constructor(private readonly postsService: PostsService) {}
