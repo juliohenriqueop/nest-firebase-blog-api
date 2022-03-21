@@ -3,6 +3,8 @@ import { Post, Get, Patch, Delete } from '@nestjs/common';
 import { Param, Query, Body } from '@nestjs/common';
 import { NotFoundException, ConflictException } from '@nestjs/common';
 import { HttpCode, HttpStatus } from '@nestjs/common';
+import { UseGuards } from '@nestjs/common';
+import { FirebaseBearerGuard } from '@modules/auth';
 import { UsersService, UserError } from '@modules/users';
 import { CreateUserInputDto, CreateUserOutputDto } from '@modules/users';
 import { toCreateRequestFromCreateUserInputDto } from '@modules/users';
@@ -15,6 +17,7 @@ import { UpdateUserInputDto, UpdateUserOutputDto } from '@modules/users';
 import { toUpdateRequestFromUpdateUserInputDto } from '@modules/users';
 import { toUpdateUserOutputDtoFromUserRecord } from '@modules/users';
 
+@UseGuards(FirebaseBearerGuard)
 @Controller({ path: 'users', version: '1' })
 export class UsersController {
   constructor(private readonly userService: UsersService) {}
