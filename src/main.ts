@@ -1,3 +1,4 @@
+import { join } from 'path';
 import * as helmet from 'helmet';
 import { NestFactory } from '@nestjs/core';
 import { ConfigService } from '@nestjs/config';
@@ -19,7 +20,37 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const configService = app.get(ConfigService);
 
-  app.use(helmet());
+  app.use(
+    helmet({
+      contentSecurityPolicy: {
+        useDefaults: true,
+        directives: {
+          imgSrc: ["'self'", 'data:', 'https://www.gstatic.com'],
+          defaultSrc: [
+            "'self'",
+            configService.get<string>('FIREBASE_APP_URL'),
+            process.env.NODE_ENV === 'production'
+              ? 'https://identitytoolkit.googleapis.com'
+              : configService.get<string>('FIREBASE_AUTH_EMULATOR_CSP'),
+          ],
+          scriptSrc: [
+            "'self'",
+            "'unsafe-inline'",
+            "'unsafe-eval'",
+            'https://www.gstatic.com',
+            'https://apis.google.com',
+          ],
+          styleSrc: [
+            "'self'",
+            'https:',
+            "'unsafe-inline'",
+            'https://fonts.googleapis.com',
+            'https://fonts.gstatic.com',
+          ],
+        },
+      },
+    }),
+  );
 
   app.setGlobalPrefix('api');
 
@@ -42,10 +73,19 @@ async function bootstrap() {
       'An API to manage users and blog posts written in TypeScript using NestJS Framework.',
     )
     .setVersion('1.0')
+    .addSecurity('Firebase Auth', {
+      type: 'http',
+      scheme: 'bearer',
+      bearerFormat: 'JWT',
+      description:
+        '<a href="/login" target="_blank">Sign-In</a> to get an access token!',
+    })
     .build();
 
   const swaggerDocument = SwaggerModule.createDocument(app, swaggerConfig);
-  SwaggerModule.setup('api/v1', app, swaggerDocument);
+  SwaggerModule.setup('api/v1', app, swaggerDocument, {
+    customJs: join('..', '..', 'swagger-firebase-token.js'),
+  });
 
   const portConfig = configService.get<string>('PORT');
   const port = parseInt(portConfig) || 3000;

@@ -1,5 +1,7 @@
+import { join } from 'path';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ServeStaticModule } from '@nestjs/serve-static';
 import { ServiceAccount } from 'firebase-admin';
 import { FirebaseModule, FirebaseModuleOptions } from 'nestjs-firebase';
 import { AppError, AppException } from '@modules/app';
@@ -86,6 +88,13 @@ import { PostsModule } from '@modules/posts';
         };
 
         return fireormSettings;
+      },
+    }),
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', 'public'),
+      serveStaticOptions: {
+        fallthrough: false,
+        extensions: ['html'],
       },
     }),
     AuthModule,

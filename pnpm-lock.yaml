@@ -1,6 +1,6 @@
 lockfileVersion: 5.3
 
-packageExtensionsChecksum: 4409afcbc118105dc971cc697445a2b2
+packageExtensionsChecksum: c0b6003e75f5149201d20a98204e29d3
 
 specifiers:
   '@commitlint/cli': ^15.0.0
@@ -12,6 +12,7 @@ specifiers:
   '@nestjs/passport': ^8.0.1
   '@nestjs/platform-express': ^8.0.0
   '@nestjs/schematics': ^8.0.0
+  '@nestjs/serve-static': ^2.2.2
   '@nestjs/swagger': ^5.2.0
   '@nestjs/testing': ^8.0.0
   '@types/express': ^4.17.13
@@ -57,6 +58,7 @@ dependencies:
   '@nestjs/core': 8.2.2_9db648ac67ddf45af580ea1e24f70cd7
   '@nestjs/passport': 8.2.1_585f20d044217707664b395e185ff550
   '@nestjs/platform-express': 8.2.2_85c4c0e028995b7d710082e2a98cc178
+  '@nestjs/serve-static': 2.2.2_85c4c0e028995b7d710082e2a98cc178
   '@nestjs/swagger': 5.2.0_15a2f029d331a579db1cdbe2494059eb
   class-transformer: 0.5.1
   class-validator: 0.13.2
@@ -1519,6 +1521,18 @@ packages:
     transitivePeerDependencies:
       - chokidar
     dev: true
+
+  /@nestjs/serve-static/2.2.2_85c4c0e028995b7d710082e2a98cc178:
+    resolution: {integrity: sha512-3Mr+Q/npS3N7iGoF3Wd6Lj9QcjMGxbNrSqupi5cviM0IKrZ1BHl5qekW95rWYNATAVqoTmjGROAq+nKKpuUagQ==}
+    peerDependencies:
+      '@nestjs/common': ^6.0.0 || ^7.0.0 || ^8.0.0
+      '@nestjs/core': ^6.0.0 || ^7.0.0 || ^8.0.0
+    dependencies:
+      '@nestjs/common': 8.2.2_7b1fc936b9361df55228aaa721957d0e
+      '@nestjs/core': 8.2.2_9db648ac67ddf45af580ea1e24f70cd7
+      express: 4.17.1
+      path-to-regexp: 0.1.7
+    dev: false
 
   /@nestjs/swagger/5.2.0_15a2f029d331a579db1cdbe2494059eb:
     resolution: {integrity: sha512-wcW2KCe7irwBw0WKsb03uFk4gnjqNcAcJxXGZxi6ljFiDgyLrQtx5MpE95o703tnn4V/hZR8MqMNFOXuup7Pqw==}
