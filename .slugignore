@@ -2,6 +2,8 @@
 
 # Folders
 .husky
+/node_modules
+/.pnpm-store
 /firebase
 !src
 

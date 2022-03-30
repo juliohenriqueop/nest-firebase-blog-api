@@ -1,0 +1,63 @@
+stages:
+  - lint
+  - spell-check
+  - unit-test
+  - vulnerability-scan
+  - deploy
+
+cache:
+  key: $CI_COMMIT_REF_SLUG
+  paths:
+    - ./node_modules
+    - ./.pnpm-store
+
+.set_npm_config:
+  - npm config set loglevel $NPM_LOG_LEVEL
+
+default:
+  image: node:16.14.2-alpine3.14
+  retry: 2
+  before_script:
+    - wget -q -O - https://get.pnpm.io/v6.16.js | node - add --global pnpm@6
+    - pnpm config set store-dir .pnpm-store
+    - !reference [.set_npm_config]
+    - pnpm install
+
+lint:
+  stage: lint
+  script:
+    - pnpm lint
+
+spell_check:
+  stage: spell-check
+  script:
+    - pnpm spell-check
+
+unit_test:
+  stage: unit-test
+  script:
+    - pnpm test
+
+vulnerability_scan:
+  stage: vulnerability-scan
+  script:
+    - pnpm audit --audit-level $PNPM_AUDIT_LEVEL
+
+deploy:
+  stage: deploy
+  cache: []
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: always
+  before_script:
+    - !reference [.set_npm_config]
+    - wget -q -O $CI_PROJECT_DIR/public/firebase-config.js $FIREBASE_WEB_CONFIG_URL
+  script:
+    - apk update
+    - apk add build-base ruby-full ruby-dev curl git
+
+    - gem update --system --no-document
+    - gem install dpl --pre --no-document
+
+    - dpl firebase
+    - dpl heroku api

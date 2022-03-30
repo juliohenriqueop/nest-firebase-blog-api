@@ -37,3 +37,12 @@ services:
       - '9005:9005'
       - '9099:9099'
       - '9199:9199'
+
+  gitlab-runner:
+    container_name: gitlab-runner
+    image: gitlab/gitlab-runner:alpine
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./.docker/gitlab-runner:/etc/gitlab-runner
+    profiles:
+      - ci
