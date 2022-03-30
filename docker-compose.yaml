@@ -20,6 +20,7 @@ services:
     volumes:
       - ./.docker/firebase:/home/node
       - ./firebase/firestore:/home/node/firebase/firestore
+      - ./firebase/storage:/home/node/firebase/storage
 
       - type: bind
         source: ./firebase.json
