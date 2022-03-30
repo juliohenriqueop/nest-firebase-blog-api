@@ -19,6 +19,7 @@ services:
     command: emulators:start --project ${FIREBASE_PROJECT_ID}
     volumes:
       - ./.docker/firebase:/home/node
+      - ./firebase/firestore:/home/node/firebase/firestore
 
       - type: bind
         source: ./firebase.json

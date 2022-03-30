@@ -1,4 +1,7 @@
 {
+  "firestore": {
+    "rules": "firebase/firestore/firestore.rules"
+  },
   "emulators": {
     "auth": {
       "host": "0.0.0.0",
