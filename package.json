@@ -5,6 +5,9 @@
   "author": "Julio Henrique Oliveira Prudente",
   "private": true,
   "license": "MIT",
+  "engines": {
+    "node": "16.14.2"
+  },
   "scripts": {
     "prepare": "husky install",
     "prebuild": "rimraf dist",
@@ -26,7 +29,9 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register ./node_modules/jest/bin/jest.js --runInBand",
     "test:e2e": "jest --config ./jest.e2e.config.json",
-    "staged": "lint-staged"
+    "staged": "lint-staged",
+    "heroku-prebuild": "pnpm config set ignore-scripts true",
+    "heroku-postbuild": "pnpm --package=@nestjs/cli dlx nest build"
   },
   "dependencies": {
     "@nestjs/common": "^8.4.4",

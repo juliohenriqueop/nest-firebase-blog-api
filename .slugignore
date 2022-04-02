@@ -1,0 +1,31 @@
+# https://github.com/nekopanic/buildpack-slug-cleaner
+
+# Folders
+.husky
+/firebase
+!src
+
+# Configuration Files
+.commitlintrc.json
+.cspell.json
+.editorconfig
+.eslintrc.json
+.*.env
+.gitignore
+.gitlab-ci.yml
+.lintstagedrc.json
+.prettierrc.json
+docker-compose.yaml
+firebase.json
+jest-resolver.js
+jest.*
+nest-cli.json
+!pnpm-lock.yaml
+
+# Typescript Files
+!*.ts
+!*.js.map
+!tsconfig.*
+
+# This file
+!.slugignore
