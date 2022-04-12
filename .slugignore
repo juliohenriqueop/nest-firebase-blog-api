@@ -29,5 +29,8 @@ nest-cli.json
 !*.js.map
 !tsconfig.*
 
+# Markdown files
+README.md
+
 # This file
 !.slugignore
